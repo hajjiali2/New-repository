@@ -1,5 +1,5 @@
 import { User } from '@supabase/supabase-js';
-import { MessageSquare, PenTool, Languages, BarChart3, ArrowRight } from 'lucide-react';
+import { MessageSquare, PenTool, Languages, BarChart3, FileText, Lightbulb, ArrowRight } from 'lucide-react';
 
 interface DashboardProps {
   user: User | null;
@@ -13,8 +13,6 @@ const tools = [
     icon: MessageSquare,
     title: 'محادثة AI',
     desc: 'تحدث مع المساعد الذكي بأي موضوع',
-    gradient: 'from-orange-500 to-orange-600',
-    glow: 'glow-orange',
     iconBg: 'bg-orange-500/20',
     iconColor: 'text-orange-400',
   },
@@ -23,8 +21,6 @@ const tools = [
     icon: PenTool,
     title: 'كاتب المحتوى',
     desc: 'أنشئ محتوى تسويقي ومقالات احترافية',
-    gradient: 'from-blue-500 to-blue-600',
-    glow: 'glow-blue',
     iconBg: 'bg-blue-500/20',
     iconColor: 'text-blue-400',
   },
@@ -33,8 +29,6 @@ const tools = [
     icon: Languages,
     title: 'المترجم الذكي',
     desc: 'ترجمة دقيقة تحافظ على السياق والمعنى',
-    gradient: 'from-emerald-500 to-emerald-600',
-    glow: '',
     iconBg: 'bg-emerald-500/20',
     iconColor: 'text-emerald-400',
   },
@@ -43,10 +37,24 @@ const tools = [
     icon: BarChart3,
     title: 'محلل البيانات',
     desc: 'حلّل بياناتك واحصل على رؤى قابلة للتنفيذ',
-    gradient: 'from-amber-500 to-amber-600',
-    glow: '',
     iconBg: 'bg-amber-500/20',
     iconColor: 'text-amber-400',
+  },
+  {
+    id: 'summarizer',
+    icon: FileText,
+    title: 'ملخص النصوص',
+    desc: 'لخّص أي نص طويل في نقاط واضحة وسريعة',
+    iconBg: 'bg-teal-500/20',
+    iconColor: 'text-teal-400',
+  },
+  {
+    id: 'ideagenerator',
+    icon: Lightbulb,
+    title: 'مولّد الأفكار',
+    desc: 'احصل على أفكار إبداعية لأعمالك ومشاريعك',
+    iconBg: 'bg-rose-500/20',
+    iconColor: 'text-rose-400',
   },
 ];
 
@@ -72,7 +80,7 @@ export default function Dashboard({ user, onOpenTool, onBack }: DashboardProps) 
         </div>
 
         {/* Tools grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {tools.map((tool) => (
             <button
               key={tool.id}

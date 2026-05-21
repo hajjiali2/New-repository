@@ -14,8 +14,10 @@ import ChatTool from './components/tools/ChatTool';
 import WriterTool from './components/tools/WriterTool';
 import TranslatorTool from './components/tools/TranslatorTool';
 import AnalyzerTool from './components/tools/AnalyzerTool';
+import SummarizerTool from './components/tools/SummarizerTool';
+import IdeaGeneratorTool from './components/tools/IdeaGeneratorTool';
 
-type View = 'landing' | 'dashboard' | 'chat' | 'writer' | 'translator' | 'analyzer';
+type View = 'landing' | 'dashboard' | 'chat' | 'writer' | 'translator' | 'analyzer' | 'summarizer' | 'ideagenerator';
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('hero');
@@ -35,46 +37,32 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const handler = () => setShowAuth(true);
+    document.addEventListener('open-auth', handler);
+    return () => document.removeEventListener('open-auth', handler);
+  }, []);
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setView('landing');
   };
 
-  const handleAuthClick = () => {
-    setShowAuth(true);
-  };
+  const handleAuthClick = () => setShowAuth(true);
+  const handleAuthSuccess = () => setShowAuth(false);
+  const handleNavigate = (section: string) => setActiveSection(section);
+  const handleOpenTool = (tool: string) => setView(tool as View);
+  const handleBackToDashboard = () => setView('dashboard');
+  const handleBackToLanding = () => setView('landing');
+  const handleGoToDashboard = () => setView('dashboard');
 
-  const handleAuthSuccess = () => {
-    setShowAuth(false);
-  };
-
-  const handleNavigate = (section: string) => {
-    setActiveSection(section);
-  };
-
-  const handleOpenTool = (tool: string) => {
-    setView(tool as View);
-  };
-
-  const handleBackToDashboard = () => {
-    setView('dashboard');
-  };
-
-  const handleBackToLanding = () => {
-    setView('landing');
-  };
-
-  const handleGoToDashboard = () => {
-    setView('dashboard');
-  };
-
-  // Tool views
   if (view === 'chat') return <ChatTool onBack={handleBackToDashboard} />;
   if (view === 'writer') return <WriterTool onBack={handleBackToDashboard} />;
   if (view === 'translator') return <TranslatorTool onBack={handleBackToDashboard} />;
   if (view === 'analyzer') return <AnalyzerTool onBack={handleBackToDashboard} />;
+  if (view === 'summarizer') return <SummarizerTool onBack={handleBackToDashboard} />;
+  if (view === 'ideagenerator') return <IdeaGeneratorTool onBack={handleBackToDashboard} />;
 
-  // Dashboard view
   if (view === 'dashboard') {
     return (
       <div className="min-h-screen bg-[#060f33]">
@@ -92,7 +80,6 @@ export default function App() {
     );
   }
 
-  // Landing page
   return (
     <div className="min-h-screen bg-[#060f33]">
       <Navbar
@@ -104,9 +91,9 @@ export default function App() {
         onDashboard={handleGoToDashboard}
       />
       <main>
-        <Hero onNavigate={handleNavigate} onDashboard={handleGoToDashboard} user={user} />
+        <Hero onNavigate={handleNavigate} onDashboard={handleGoToDashboard} onAuthClick={handleAuthClick} user={user} />
         <Features />
-        <Solutions />
+        <Solutions onAuthClick={handleAuthClick} />
         <Pricing onAuthClick={handleAuthClick} />
         <Contact />
       </main>
