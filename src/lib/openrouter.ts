@@ -8,7 +8,7 @@ export interface ChatMessage {
 
 export async function chatWithAI(
   messages: ChatMessage[],
-  model = 'mistralai/mistral-7b-instruct'
+  model = 'liquid/lfm-2.5-1.2b-instruct:free'
 ): Promise<string> {
   if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY.includes('ضع') || OPENROUTER_API_KEY.length < 10) {
     throw new Error('MISSING_KEY');
