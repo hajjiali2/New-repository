@@ -34,8 +34,13 @@ ${text}`;
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompt }]);
       setResult(reply);
-    } catch {
-      setResult('عذراً، حدث خطأ. يرجى التأكد من مفتاح API والمحاولة مرة أخرى.');
+    } catch (err: any) {
+      const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';
+      setResult(
+        isKeyError
+          ? 'مفتاح OpenRouter API غير مضبوط.\n\nالخطوات:\n1. سجّل في openrouter.ai\n2. انسخ مفتاح API من قسم Keys\n3. ضعه في ملف .env في المتغير VITE_OPENROUTER_API_KEY'
+          : `حدث خطأ: ${err.message}`
+      );
     } finally {
       setLoading(false);
     }

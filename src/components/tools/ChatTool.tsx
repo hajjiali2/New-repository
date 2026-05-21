@@ -31,10 +31,16 @@ export default function ChatTool({ onBack }: ChatToolProps) {
     try {
       const reply = await chatWithAI(newMessages);
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
-    } catch {
+    } catch (err: any) {
+      const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'عذراً، حدث خطأ. يرجى التأكد من مفتاح API والمحاولة مرة أخرى.' },
+        {
+          role: 'assistant',
+          content: isKeyError
+            ? 'لم يتم ضبط مفتاح OpenRouter API بعد.\n\nالخطوات:\n1. سجّل في openrouter.ai\n2. انسخ مفتاح API من قسم Keys\n3. ضعه في ملف .env في المتغير VITE_OPENROUTER_API_KEY'
+            : `حدث خطأ: ${err.message}`,
+        },
       ]);
     } finally {
       setLoading(false);

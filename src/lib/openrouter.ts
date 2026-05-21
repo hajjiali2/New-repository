@@ -10,6 +10,10 @@ export async function chatWithAI(
   messages: ChatMessage[],
   model = 'mistralai/mistral-7b-instruct'
 ): Promise<string> {
+  if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY.includes('ضع') || OPENROUTER_API_KEY.length < 10) {
+    throw new Error('MISSING_KEY');
+  }
+
   const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -25,7 +29,10 @@ export async function chatWithAI(
   });
 
   if (!response.ok) {
-    throw new Error(`OpenRouter error: ${response.statusText}`);
+    const errBody = await response.json().catch(() => ({}));
+    const msg = errBody?.error?.message || response.statusText;
+    if (response.status === 401) throw new Error('INVALID_KEY');
+    throw new Error(msg);
   }
 
   const data = await response.json();
