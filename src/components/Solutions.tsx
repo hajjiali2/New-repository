@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Building2, User, CheckCircle2, ArrowLeft } from 'lucide-react';
 
+const openAuth = () => document.dispatchEvent(new CustomEvent('open-auth'));
+
 const companySolutions = [
   {
     title: 'توليد المحتوى التسويقي',
@@ -113,7 +115,10 @@ export default function Solutions() {
 
         {/* CTA */}
         <div className="text-center mt-12">
-          <button className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold font-arabic text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 glow-orange hover:scale-105">
+          <button
+            onClick={openAuth}
+            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold font-arabic text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 glow-orange hover:scale-105"
+          >
             استكشف جميع الحلول
             <ArrowLeft className="w-5 h-5" />
           </button>

@@ -91,9 +91,9 @@ export default function App() {
         onDashboard={handleGoToDashboard}
       />
       <main>
-        <Hero onNavigate={handleNavigate} onDashboard={handleGoToDashboard} onAuthClick={handleAuthClick} user={user} />
+        <Hero onNavigate={handleNavigate} onDashboard={handleGoToDashboard} user={user} />
         <Features />
-        <Solutions onAuthClick={handleAuthClick} />
+        <Solutions />
         <Pricing onAuthClick={handleAuthClick} />
         <Contact />
       </main>
