@@ -1,5 +1,9 @@
 import { CheckCircle2, Zap, Building2, Crown } from 'lucide-react';
 
+interface PricingProps {
+  onAuthClick?: () => void;
+}
+
 const plans = [
   {
     name: 'مجاني',
@@ -20,6 +24,7 @@ const plans = [
     cta: 'ابدأ مجاناً',
     ctaStyle: 'glass border border-white/20 text-white hover:bg-white/10',
     highlight: false,
+    action: 'auth',
   },
   {
     name: 'أعمال',
@@ -43,6 +48,7 @@ const plans = [
     cta: 'ابدأ تجربة 14 يوم مجاناً',
     ctaStyle: 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 glow-orange',
     highlight: true,
+    action: 'auth',
   },
   {
     name: 'مؤسسي',
@@ -66,10 +72,20 @@ const plans = [
     cta: 'تواصل مع فريق المبيعات',
     ctaStyle: 'glass border border-amber-500/30 text-amber-300 hover:bg-amber-500/10',
     highlight: false,
+    action: 'contact',
   },
 ];
 
-export default function Pricing() {
+export default function Pricing({ onAuthClick }: PricingProps) {
+  const handleAction = (action: string) => {
+    if (action === 'auth') {
+      onAuthClick?.();
+    } else if (action === 'contact') {
+      const el = document.getElementById('contact');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <section id="pricing" className="py-24 relative">
       <div className="absolute inset-0 pointer-events-none">
@@ -131,7 +147,10 @@ export default function Pricing() {
                 ))}
               </ul>
 
-              <button className={`w-full py-3.5 rounded-xl font-bold font-arabic text-sm transition-all duration-300 ${plan.ctaStyle}`}>
+              <button
+                onClick={() => handleAction(plan.action)}
+                className={`w-full py-3.5 rounded-xl font-bold font-arabic text-sm transition-all duration-300 ${plan.ctaStyle}`}
+              >
                 {plan.cta}
               </button>
             </div>

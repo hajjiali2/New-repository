@@ -107,7 +107,7 @@ export default function App() {
         <Hero onNavigate={handleNavigate} onDashboard={handleGoToDashboard} user={user} />
         <Features />
         <Solutions />
-        <Pricing />
+        <Pricing onAuthClick={handleAuthClick} />
         <Contact />
       </main>
       <Footer />

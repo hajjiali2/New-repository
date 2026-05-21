@@ -6,14 +6,13 @@ export interface ChatMessage {
   content: string;
 }
 
-export async function chatWithAI(
-  messages: ChatMessage[],
-  model = 'liquid/lfm-2.5-1.2b-instruct:free'
-): Promise<string> {
-  if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY.includes('ضع') || OPENROUTER_API_KEY.length < 10) {
-    throw new Error('MISSING_KEY');
-  }
+const FREE_MODELS = [
+  'nvidia/nemotron-3-nano-30b-a3b:free',
+  'liquid/lfm-2.5-1.2b-instruct:free',
+  'openrouter/free',
+];
 
+async function callModel(messages: ChatMessage[], model: string): Promise<string> {
   const response = await fetch(`${OPENROUTER_BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -22,10 +21,7 @@ export async function chatWithAI(
       'HTTP-Referer': window.location.origin,
       'X-Title': 'AI Hub Arabia',
     },
-    body: JSON.stringify({
-      model,
-      messages,
-    }),
+    body: JSON.stringify({ model, messages }),
   });
 
   if (!response.ok) {
@@ -36,5 +32,30 @@ export async function chatWithAI(
   }
 
   const data = await response.json();
-  return data.choices[0]?.message?.content ?? '';
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('empty response');
+  return content;
+}
+
+export async function chatWithAI(
+  messages: ChatMessage[],
+  model?: string
+): Promise<string> {
+  if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY.includes('ضع') || OPENROUTER_API_KEY.length < 10) {
+    throw new Error('MISSING_KEY');
+  }
+
+  const modelsToTry = model ? [model] : FREE_MODELS;
+
+  let lastError: Error = new Error('فشل الاتصال');
+  for (const m of modelsToTry) {
+    try {
+      return await callModel(messages, m);
+    } catch (err: any) {
+      if (err.message === 'INVALID_KEY') throw err;
+      lastError = err;
+    }
+  }
+
+  throw lastError;
 }
