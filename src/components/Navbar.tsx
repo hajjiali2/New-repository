@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Zap } from 'lucide-react';
+import { User } from '@supabase/supabase-js';
+import { Menu, X, Zap, LogOut, CircleUser as UserCircle } from 'lucide-react';
 
 interface NavbarProps {
   activeSection: string;
   onNavigate: (section: string) => void;
+  user: User | null;
+  onAuthClick: () => void;
+  onSignOut: () => void;
 }
 
 const navLinks = [
@@ -14,7 +18,7 @@ const navLinks = [
   { id: 'contact', label: 'تواصل معنا' },
 ];
 
-export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
+export default function Navbar({ activeSection, onNavigate, user, onAuthClick, onSignOut }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -72,14 +76,40 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* Auth buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={() => handleNav('contact')}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold font-arabic hover:from-orange-600 hover:to-orange-700 transition-all duration-200 glow-orange"
-            >
-              ابدأ الآن
-            </button>
+            {user ? (
+              <>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg glass border border-white/10">
+                  <UserCircle className="w-4 h-4 text-orange-400" />
+                  <span className="text-white/80 text-sm font-arabic truncate max-w-[120px]">
+                    {user.user_metadata?.full_name || user.email}
+                  </span>
+                </div>
+                <button
+                  onClick={onSignOut}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-white/10 text-white/70 text-sm font-arabic hover:text-white hover:bg-white/10 transition-all"
+                >
+                  <LogOut className="w-4 h-4" />
+                  خروج
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={onAuthClick}
+                  className="px-5 py-2.5 rounded-xl glass border border-white/15 text-white text-sm font-semibold font-arabic hover:bg-white/10 transition-all duration-200"
+                >
+                  تسجيل الدخول
+                </button>
+                <button
+                  onClick={onAuthClick}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold font-arabic hover:from-orange-600 hover:to-orange-700 transition-all duration-200 glow-orange"
+                >
+                  ابدأ الآن
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile toggle */}
@@ -108,12 +138,40 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
                   {link.label}
                 </button>
               ))}
-              <button
-                onClick={() => handleNav('contact')}
-                className="mt-2 px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold font-arabic text-center"
-              >
-                ابدأ الآن
-              </button>
+              <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2">
+                {user ? (
+                  <>
+                    <div className="flex items-center gap-2 px-4 py-2">
+                      <UserCircle className="w-4 h-4 text-orange-400" />
+                      <span className="text-white/80 text-sm font-arabic truncate">
+                        {user.user_metadata?.full_name || user.email}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => { onSignOut(); setIsOpen(false); }}
+                      className="flex items-center gap-2 px-4 py-3 rounded-lg text-white/70 font-arabic text-sm hover:bg-white/5 justify-center"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      تسجيل الخروج
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { onAuthClick(); setIsOpen(false); }}
+                      className="px-5 py-3 rounded-xl glass border border-white/15 text-white text-sm font-semibold font-arabic text-center"
+                    >
+                      تسجيل الدخول
+                    </button>
+                    <button
+                      onClick={() => { onAuthClick(); setIsOpen(false); }}
+                      className="px-5 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold font-arabic text-center"
+                    >
+                      ابدأ الآن
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}
