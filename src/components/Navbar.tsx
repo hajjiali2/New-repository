@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { Menu, X, Zap, LogOut, CircleUser as UserCircle } from 'lucide-react';
+import { Menu, X, Zap, LogOut, CircleUser as UserCircle, LayoutGrid } from 'lucide-react';
 
 interface NavbarProps {
   activeSection: string;
@@ -8,6 +8,7 @@ interface NavbarProps {
   user: User | null;
   onAuthClick: () => void;
   onSignOut: () => void;
+  onDashboard: () => void;
 }
 
 const navLinks = [
@@ -18,7 +19,7 @@ const navLinks = [
   { id: 'contact', label: 'تواصل معنا' },
 ];
 
-export default function Navbar({ activeSection, onNavigate, user, onAuthClick, onSignOut }: NavbarProps) {
+export default function Navbar({ activeSection, onNavigate, user, onAuthClick, onSignOut, onDashboard }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -46,7 +47,7 @@ export default function Navbar({ activeSection, onNavigate, user, onAuthClick, o
           {/* Logo */}
           <div
             className="flex items-center gap-3 cursor-pointer"
-            onClick={() => handleNav('hero')}
+            onClick={() => user ? onDashboard() : handleNav('hero')}
           >
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center glow-orange">
               <Zap className="w-5 h-5 text-white" fill="currentColor" />
@@ -60,26 +61,35 @@ export default function Navbar({ activeSection, onNavigate, user, onAuthClick, o
           </div>
 
           {/* Desktop nav */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => handleNav(link.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium font-arabic transition-all duration-200 ${
-                  activeSection === link.id
-                    ? 'text-orange-400 bg-orange-500/10'
-                    : 'text-white/70 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
+          {!user && (
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => handleNav(link.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium font-arabic transition-all duration-200 ${
+                    activeSection === link.id
+                      ? 'text-orange-400 bg-orange-500/10'
+                      : 'text-white/70 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  {link.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Auth buttons */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
+                <button
+                  onClick={onDashboard}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold font-arabic hover:from-orange-600 hover:to-orange-700 transition-all duration-200 glow-orange"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  الأدوات
+                </button>
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg glass border border-white/10">
                   <UserCircle className="w-4 h-4 text-orange-400" />
                   <span className="text-white/80 text-sm font-arabic truncate max-w-[120px]">
@@ -125,7 +135,7 @@ export default function Navbar({ activeSection, onNavigate, user, onAuthClick, o
         {isOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-white/10">
             <div className="flex flex-col gap-1 pt-4">
-              {navLinks.map((link) => (
+              {!user && navLinks.map((link) => (
                 <button
                   key={link.id}
                   onClick={() => handleNav(link.id)}
@@ -138,7 +148,7 @@ export default function Navbar({ activeSection, onNavigate, user, onAuthClick, o
                   {link.label}
                 </button>
               ))}
-              <div className="mt-3 pt-3 border-t border-white/10 flex flex-col gap-2">
+              <div className={`${user ? '' : 'mt-3 pt-3 border-t border-white/10'} flex flex-col gap-2`}>
                 {user ? (
                   <>
                     <div className="flex items-center gap-2 px-4 py-2">
@@ -147,6 +157,13 @@ export default function Navbar({ activeSection, onNavigate, user, onAuthClick, o
                         {user.user_metadata?.full_name || user.email}
                       </span>
                     </div>
+                    <button
+                      onClick={() => { onDashboard(); setIsOpen(false); }}
+                      className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-arabic text-sm font-semibold justify-center"
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      الأدوات
+                    </button>
                     <button
                       onClick={() => { onSignOut(); setIsOpen(false); }}
                       className="flex items-center gap-2 px-4 py-3 rounded-lg text-white/70 font-arabic text-sm hover:bg-white/5 justify-center"

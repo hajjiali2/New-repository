@@ -1,11 +1,14 @@
 import { useEffect, useRef } from 'react';
+import { User } from '@supabase/supabase-js';
 import { ArrowLeft, Sparkles, TrendingUp, Users, Building2 } from 'lucide-react';
 
 interface HeroProps {
   onNavigate: (section: string) => void;
+  onDashboard: () => void;
+  user: User | null;
 }
 
-export default function Hero({ onNavigate }: HeroProps) {
+export default function Hero({ onNavigate, onDashboard, user }: HeroProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -100,10 +103,10 @@ export default function Hero({ onNavigate }: HeroProps) {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up">
             <button
-              onClick={() => onNavigate('contact')}
+              onClick={() => user ? onDashboard() : onNavigate('contact')}
               className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold font-arabic text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 glow-orange hover:scale-105"
             >
-              ابدأ مجاناً
+              {user ? 'الذهاب للأدوات' : 'ابدأ مجاناً'}
               <ArrowLeft className="w-5 h-5" />
             </button>
             <button
