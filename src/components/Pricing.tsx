@@ -1,5 +1,7 @@
 import { CheckCircle2, Zap, Building2, Crown } from 'lucide-react';
 
+const openAuth = () => document.dispatchEvent(new CustomEvent('open-auth'));
+
 interface PricingProps {
   onAuthClick?: () => void;
 }
@@ -79,7 +81,7 @@ const plans = [
 export default function Pricing({ onAuthClick }: PricingProps) {
   const handleAction = (action: string) => {
     if (action === 'auth') {
-      onAuthClick?.();
+      openAuth();
     } else if (action === 'contact') {
       const el = document.getElementById('contact');
       if (el) el.scrollIntoView({ behavior: 'smooth' });
