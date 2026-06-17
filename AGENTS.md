@@ -32,3 +32,9 @@ Open auth modal → "إنشاء حساب" (sign up) → log in → navbar shows 
 
 ### Pre-existing gotcha
 `npm run lint` and `npm run typecheck` currently FAIL on pre-existing issues (unused vars, `any`, and a missing `vite/client` type reference in `src/lib`). These are not environment problems — `npm run build` and `npm run dev` work fine.
+
+### MVP structure (admin + business dashboards)
+- Backend: SQL migrations under `supabase/migrations/` define `profiles.role`/`organization_id`, plus `organizations`, `organization_members`, `usage_logs`, RLS policies, helper functions (`is_admin()`, `is_org_owner()`, `can_view_usage()`), and RPCs (`create_organization`, `add_org_member`, `remove_org_member`, `admin_stats`). Client service layer is in `src/lib/api/*` with shared types in `src/lib/types.ts`.
+- Frontend: `src/components/admin/AdminDashboard.tsx` (admin-only) and `src/components/business/BusinessDashboard.tsx`, routed via `view` state in `src/App.tsx` and reached from `Navbar` links ("الإدارة" shows only when `profile.role === 'admin'`; "فريقي" for any logged-in user). The 6 AI tools call `logUsage(...)` to populate `usage_logs`.
+- Non-obvious gotcha: in this local stack, RLS policies are NOT sufficient on their own — table-level `GRANT`s to `anon`/`authenticated` are also required, which is why `supabase/migrations/20260617211000_mvp_grants.sql` exists. New tables need matching grants or PostgREST returns "permission denied".
+- Testing admin features: new signups default to `role='user'`. To exercise the admin dashboard locally, promote a user with SQL, e.g. `docker exec -i supabase_db_<dir> psql -U postgres -d postgres -c "update public.profiles set role='admin' where email='you@example.com';"`.
