@@ -8,6 +8,7 @@ import {
   updateUserPlan, updateUserRole, deleteContactRequest,
 } from '../../lib/api/admin';
 import { AdminStats, ContactRequest, Plan, Profile, UserRole, PLAN_LABELS } from '../../lib/types';
+import { getErrorMessage } from '../../lib/errors';
 
 interface AdminDashboardProps {
   onBack: () => void;
@@ -37,7 +38,7 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
       setUsers(u);
       setRequests(r);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = getErrorMessage(err);
       setError(msg.includes('admin only') ? 'هذه الصفحة مخصصة للمشرفين فقط.' : msg);
     } finally {
       setLoading(false);
@@ -48,17 +49,17 @@ export default function AdminDashboard({ onBack }: AdminDashboardProps) {
 
   const handlePlanChange = async (id: string, plan: Plan) => {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, plan } : u)));
-    try { await updateUserPlan(id, plan); } catch (err) { setError(String(err)); load(); }
+    try { await updateUserPlan(id, plan); } catch (err) { setError(getErrorMessage(err)); load(); }
   };
 
   const handleRoleChange = async (id: string, role: UserRole) => {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
-    try { await updateUserRole(id, role); } catch (err) { setError(String(err)); load(); }
+    try { await updateUserRole(id, role); } catch (err) { setError(getErrorMessage(err)); load(); }
   };
 
   const handleDeleteRequest = async (id: string) => {
     setRequests((prev) => prev.filter((r) => r.id !== id));
-    try { await deleteContactRequest(id); } catch (err) { setError(String(err)); load(); }
+    try { await deleteContactRequest(id); } catch (err) { setError(getErrorMessage(err)); load(); }
   };
 
   const statCards = stats ? [

@@ -9,6 +9,7 @@ import {
   listMembers, addMemberByEmail, removeMember, getOrgUsage,
 } from '../../lib/api/business';
 import { Organization, OrganizationMember, UsageLog, TOOL_LABELS, PLAN_LABELS } from '../../lib/types';
+import { getErrorMessage } from '../../lib/errors';
 
 interface BusinessDashboardProps {
   user: User | null;
@@ -49,7 +50,7 @@ export default function BusinessDashboard({ user, onBack }: BusinessDashboardPro
       setOrg(o);
       if (o) await loadOrgData(o);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function BusinessDashboard({ user, onBack }: BusinessDashboardPro
       setOrg(o);
       await loadOrgData(o);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getErrorMessage(err));
     } finally {
       setCreating(false);
     }
@@ -79,7 +80,7 @@ export default function BusinessDashboard({ user, onBack }: BusinessDashboardPro
       await renameOrganization(org.id, nameDraft.trim());
       setOrg({ ...org, name: nameDraft.trim() });
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getErrorMessage(err));
     } finally {
       setEditingName(false);
     }
@@ -96,7 +97,7 @@ export default function BusinessDashboard({ user, onBack }: BusinessDashboardPro
       setInviteEmail('');
       await loadOrgData(org);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+      const msg = getErrorMessage(err);
       setError(msg.includes('no registered user') ? 'لا يوجد مستخدم مسجّل بهذا البريد الإلكتروني.' : msg);
     } finally {
       setInviting(false);
@@ -110,7 +111,7 @@ export default function BusinessDashboard({ user, onBack }: BusinessDashboardPro
       await removeMember(org.id, userId);
       await loadOrgData(org);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      setError(getErrorMessage(err));
       load();
     }
   };
