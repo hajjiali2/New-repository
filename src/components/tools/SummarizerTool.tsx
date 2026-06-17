@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileText, ArrowRight, Copy, Check } from 'lucide-react';
 import { chatWithAI } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
 
 interface SummarizerToolProps {
   onBack: () => void;
@@ -34,6 +35,7 @@ export default function SummarizerTool({ onBack }: SummarizerToolProps) {
 
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompt }]);
+      logUsage('summarizer', text.length, reply.length);
       setResult(reply);
     } catch (err: any) {
       const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';

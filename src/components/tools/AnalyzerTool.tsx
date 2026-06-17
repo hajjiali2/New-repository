@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { BarChart3, ArrowRight, Copy, Check } from 'lucide-react';
 import { chatWithAI } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
 
 interface AnalyzerToolProps {
   onBack: () => void;
@@ -44,6 +45,7 @@ ${text}`,
 
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompts[analysisType] || prompts.sentiment }]);
+      logUsage('analyzer', text.length, reply.length);
       setResult(reply);
     } catch (err: any) {
       const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';

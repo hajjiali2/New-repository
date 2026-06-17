@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PenTool, ArrowRight, Copy, Check } from 'lucide-react';
 import { chatWithAI } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
 
 interface WriterToolProps {
   onBack: () => void;
@@ -44,6 +45,7 @@ export default function WriterTool({ onBack }: WriterToolProps) {
 
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompt }]);
+      logUsage('writer', prompt.length, reply.length);
       setResult(reply);
     } catch (err: any) {
       const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';

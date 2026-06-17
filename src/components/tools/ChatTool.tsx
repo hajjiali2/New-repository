@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, ArrowRight, Trash2, MessageSquare } from 'lucide-react';
 import { chatWithAI, ChatMessage } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
 
 interface ChatToolProps {
   onBack: () => void;
@@ -30,6 +31,7 @@ export default function ChatTool({ onBack }: ChatToolProps) {
 
     try {
       const reply = await chatWithAI(newMessages);
+      logUsage('chat', text.length, reply.length);
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
     } catch (err: any) {
       const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';

@@ -5,6 +5,7 @@ import {
   Briefcase, FileText, ShoppingBag, Megaphone, Tag,
 } from 'lucide-react';
 import { chatWithAI } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
 
 interface IdeaGeneratorToolProps {
   onBack: () => void;
@@ -121,6 +122,7 @@ export default function IdeaGeneratorTool({ onBack }: IdeaGeneratorToolProps) {
 
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompt }]);
+      logUsage('ideagenerator', prompt.length, reply.length);
       setRawResult(reply);
       const parsed = parseIdeas(reply);
       setIdeas(parsed);

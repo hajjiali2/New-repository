@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Languages, ArrowRight, Copy, Check, ArrowLeftRight } from 'lucide-react';
 import { chatWithAI } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
 
 interface TranslatorToolProps {
   onBack: () => void;
@@ -33,6 +34,7 @@ ${text}`;
 
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompt }]);
+      logUsage('translator', text.length, reply.length);
       setResult(reply);
     } catch (err: any) {
       const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';
