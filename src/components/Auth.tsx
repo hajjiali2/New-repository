@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { getErrorMessage } from '../lib/errors';
 import { X, Mail, Lock, User, ArrowLeft } from 'lucide-react';
 
 interface AuthProps {
@@ -44,8 +45,8 @@ export default function Auth({ onClose }: AuthProps) {
         if (loginError) throw loginError;
         onClose();
       }
-    } catch (err: any) {
-      const msg = err.message || 'حدث خطأ غير متوقع';
+    } catch (err) {
+      const msg = getErrorMessage(err);
       if (msg.includes('Invalid login credentials')) {
         setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
       } else if (msg.includes('User already registered')) {

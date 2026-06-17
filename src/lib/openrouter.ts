@@ -51,9 +51,9 @@ export async function chatWithAI(
   for (const m of modelsToTry) {
     try {
       return await callModel(messages, m);
-    } catch (err: any) {
-      if (err.message === 'INVALID_KEY') throw err;
-      lastError = err;
+    } catch (err) {
+      if (err instanceof Error && err.message === 'INVALID_KEY') throw err;
+      lastError = err instanceof Error ? err : new Error(String(err));
     }
   }
 
