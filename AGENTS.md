@@ -33,7 +33,14 @@ Open auth modal → "إنشاء حساب" (sign up) → log in → navbar shows 
 ### Pre-existing gotcha
 `npm run lint` and `npm run typecheck` currently FAIL on pre-existing issues (unused vars, `any`, and a missing `vite/client` type reference in `src/lib`). These are not environment problems — `npm run build` and `npm run dev` work fine.
 
-### MVP structure (admin + business dashboards)
+### Saudi Discovery platform (current primary app)
+`src/main.tsx` boots **Saudi Discovery** (`src/discovery/App.tsx`), a business discovery + advertising platform (Arabic RTL + English toggle, dark/light mode) built on react-router-dom. The earlier "AI Hub" code (`src/App.tsx`, `src/components/*`) is retained but no longer routed.
+- Structure: `src/discovery/` → `api.ts` (all Supabase data access), `types.ts`, `context.tsx` (Theme/Locale/Auth providers + hooks), `i18n.ts`, `utils.ts`, `components/`, `pages/` (public) and `pages/dashboard/` (business/admin/affiliate).
+- DB: migrations `2026..._discovery_schema.sql` (+ helper `owns_business()`, RLS) and `..._discovery_seed.sql` (categories, cities, plans, ad products, 12 demo businesses, reviews, offers, coupons, leads, blog, sample revenue/analytics). Same grants gotcha applies — new tables need explicit `GRANT`s (see the discovery schema migration).
+- Routing: public pages are open; `/dashboard` and `/affiliate` require login; `/admin` requires `profiles.role='admin'`. Promote a user via SQL to test admin (see below). New businesses are created with `owner_id = auth.uid()` and `status='pending'` (admins activate them in the admin dashboard).
+- Non-obvious: demo images use `picsum.photos` / `ui-avatars.com` (external); business creation uses native `<select>` dropdowns (fine for users, but automated/computer-use testing struggles with native selects). Stripe is modeled in the schema (invoices/subscriptions) but real charging needs `STRIPE` keys; current checkout records a paid invoice as a mock.
+
+### MVP structure (admin + business dashboards) — legacy AI Hub
 - Backend: SQL migrations under `supabase/migrations/` define `profiles.role`/`organization_id`, plus `organizations`, `organization_members`, `usage_logs`, RLS policies, helper functions (`is_admin()`, `is_org_owner()`, `can_view_usage()`), and RPCs (`create_organization`, `add_org_member`, `remove_org_member`, `admin_stats`). Client service layer is in `src/lib/api/*` with shared types in `src/lib/types.ts`.
 - Frontend: `src/components/admin/AdminDashboard.tsx` (admin-only) and `src/components/business/BusinessDashboard.tsx`, routed via `view` state in `src/App.tsx` and reached from `Navbar` links ("الإدارة" shows only when `profile.role === 'admin'`; "فريقي" for any logged-in user). The 6 AI tools call `logUsage(...)` to populate `usage_logs`.
 - Non-obvious gotcha: in this local stack, RLS policies are NOT sufficient on their own — table-level `GRANT`s to `anon`/`authenticated` are also required, which is why `supabase/migrations/20260617211000_mvp_grants.sql` exists. New tables need matching grants or PostgREST returns "permission denied".
