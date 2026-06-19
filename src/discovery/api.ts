@@ -483,6 +483,18 @@ export async function adminAffiliates(): Promise<Affiliate[]> {
   const { data } = await supabase.from('affiliates').select('*').order('created_at', { ascending: false });
   return (data ?? []) as Affiliate[];
 }
+export interface PayoutRow {
+  id: string; affiliate_id: string; amount: number; currency: string; method: string;
+  status: string; created_at: string; affiliate?: { code: string } | null;
+}
+export async function adminPayouts(): Promise<PayoutRow[]> {
+  const { data } = await supabase.from('payouts').select('*, affiliate:affiliates(code)').order('created_at', { ascending: false });
+  return (data ?? []) as PayoutRow[];
+}
+export async function adminMarkPayoutPaid(id: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_mark_payout_paid', { payout_id: id });
+  if (error) throw error;
+}
 export async function adminUpdateBusiness(id: string, patch: Partial<Business>): Promise<void> {
   const { error } = await supabase.from('businesses').update(patch).eq('id', id);
   if (error) throw error;

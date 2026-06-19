@@ -6,7 +6,7 @@ import {
 import {
   AdminStats, adminStats, adminAllBusinesses, adminUpdateBusiness, adminAllReviews,
   adminModerateReview, adminAllLeads, adminCampaigns, adminAffiliates, adminInvoices,
-  adminSetVerification,
+  adminSetVerification, adminPayouts, adminMarkPayoutPaid, PayoutRow,
 } from '../../api';
 import { Business, Review, Lead, AdCampaign, Affiliate, Invoice } from '../../types';
 import { useLocale } from '../../context';
@@ -14,7 +14,7 @@ import { localName, formatPrice, formatNumber, PLAN_BADGE } from '../../utils';
 import SEO from '../../components/SEO';
 import { Loader, EmptyState } from '../../components/ui';
 
-type Tab = 'overview' | 'businesses' | 'reviews' | 'leads' | 'ads' | 'affiliates' | 'revenue';
+type Tab = 'overview' | 'businesses' | 'reviews' | 'leads' | 'ads' | 'affiliates' | 'payouts' | 'revenue';
 
 export default function AdminDashboard() {
   const { t } = useLocale();
@@ -29,7 +29,7 @@ export default function AdminDashboard() {
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {([
           ['overview', 'نظرة عامة'], ['businesses', 'الأعمال'], ['reviews', 'التقييمات'],
-          ['leads', 'العملاء'], ['ads', 'الإعلانات'], ['affiliates', 'المسوّقون'], ['revenue', 'الإيرادات'],
+          ['leads', 'العملاء'], ['ads', 'الإعلانات'], ['affiliates', 'المسوّقون'], ['payouts', 'المدفوعات'], ['revenue', 'الإيرادات'],
         ] as [Tab, string][]).map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
             className={`px-4 py-2 rounded-lg text-sm font-arabic font-semibold whitespace-nowrap transition-colors ${tab === key ? 'bg-fuchsia-500 text-white' : 'bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10'}`}>
@@ -43,6 +43,7 @@ export default function AdminDashboard() {
       {tab === 'leads' && <Leads />}
       {tab === 'ads' && <Ads />}
       {tab === 'affiliates' && <Affiliates />}
+      {tab === 'payouts' && <Payouts />}
       {tab === 'revenue' && <Revenue />}
     </div>
   );
@@ -223,6 +224,33 @@ function Affiliates() {
           <div className="text-sm text-slate-500 dark:text-slate-400 font-arabic mt-1">أرباح: {formatPrice(a.total_earned, 'SAR', locale)}</div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function Payouts() {
+  const { locale } = useLocale();
+  const [items, setItems] = useState<PayoutRow[]>([]);
+  const load = () => adminPayouts().then(setItems);
+  useEffect(() => { load(); }, []);
+  const pay = async (id: string) => { await adminMarkPayoutPaid(id); load(); };
+  if (items.length === 0) return <EmptyState message="لا توجد طلبات سحب" />;
+  return (
+    <div className="overflow-x-auto rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+      <table className="w-full text-sm">
+        <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-400 font-arabic">
+          <th className="px-4 py-3 text-start">المسوّق</th><th className="px-4 py-3 text-start">المبلغ</th><th className="px-4 py-3 text-start">الطريقة</th><th className="px-4 py-3 text-start">الحالة</th><th className="px-4 py-3 text-start">إجراء</th>
+        </tr></thead>
+        <tbody>{items.map((p) => (
+          <tr key={p.id} className="border-b border-slate-100 dark:border-white/5">
+            <td className="px-4 py-3 font-bold" dir="ltr">{p.affiliate?.code || '—'}</td>
+            <td className="px-4 py-3">{formatPrice(Number(p.amount), p.currency, locale)}</td>
+            <td className="px-4 py-3 font-arabic">{p.method || '—'}</td>
+            <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-md text-xs font-arabic ${p.status === 'paid' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}`}>{p.status === 'paid' ? 'مدفوع' : 'بانتظار الدفع'}</span></td>
+            <td className="px-4 py-3">{p.status !== 'paid' && <button onClick={() => pay(p.id)} className="px-3 py-1 rounded-md bg-emerald-500/15 text-emerald-500 text-xs font-arabic">تعليم كمدفوع</button>}</td>
+          </tr>
+        ))}</tbody>
+      </table>
     </div>
   );
 }

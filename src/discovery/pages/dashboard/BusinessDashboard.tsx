@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Plus, Eye, MousePointerClick, Users, Tag, Ticket, Star, Megaphone, Crown,
   Trash2, BarChart3, Store, Check, Package, ShoppingCart, Bell, LifeBuoy,
-  Sparkles, BadgeCheck, ShieldAlert, DollarSign,
+  Sparkles, BadgeCheck, ShieldAlert, DollarSign, TrendingUp,
 } from 'lucide-react';
 import {
   Business, Offer, Coupon, Lead, Review, AdCampaign, AdProduct, SubscriptionPlan,
@@ -25,7 +25,7 @@ import SEO from '../../components/SEO';
 import { Loader, EmptyState } from '../../components/ui';
 import CategoryIcon from '../../components/CategoryIcon';
 
-type Tab = 'overview' | 'products' | 'orders' | 'customers' | 'revenue' | 'offers' | 'coupons' | 'leads' | 'reviews' | 'ads' | 'notifications' | 'support' | 'plan';
+type Tab = 'overview' | 'products' | 'orders' | 'customers' | 'revenue' | 'offers' | 'coupons' | 'leads' | 'reviews' | 'ads' | 'marketing' | 'notifications' | 'support' | 'plan';
 
 export default function BusinessDashboard() {
   const { t } = useLocale();
@@ -89,7 +89,7 @@ export default function BusinessDashboard() {
               ['overview', BarChart3, 'نظرة عامة'], ['products', Package, t('products')], ['orders', ShoppingCart, t('orders')],
               ['customers', Users, t('customers')], ['revenue', DollarSign, t('revenue')], ['offers', Tag, t('offers')], ['coupons', Ticket, t('coupons')],
               ['leads', Users, 'العملاء المحتملون'], ['reviews', Star, t('reviews')], ['ads', Megaphone, 'الإعلانات'],
-              ['notifications', Bell, t('notifications')], ['support', LifeBuoy, t('support')], ['plan', Crown, 'الاشتراك'],
+              ['marketing', TrendingUp, 'تحليلات التسويق'], ['notifications', Bell, t('notifications')], ['support', LifeBuoy, t('support')], ['plan', Crown, 'الاشتراك'],
             ] as [Tab, typeof Tag, string][]).map(([key, Icon, label]) => (
               <button key={key} onClick={() => setTab(key)}
                 className={`px-4 py-2 rounded-lg text-sm font-arabic font-semibold whitespace-nowrap inline-flex items-center gap-1.5 transition-colors ${tab === key ? 'bg-teal-500 text-white' : 'bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10'}`}>
@@ -108,6 +108,7 @@ export default function BusinessDashboard() {
           {tab === 'leads' && <Leads business={selected} />}
           {tab === 'reviews' && <Reviews business={selected} />}
           {tab === 'ads' && <Ads business={selected} />}
+          {tab === 'marketing' && <Marketing business={selected} />}
           {tab === 'notifications' && <Notifications business={selected} />}
           {tab === 'support' && <Support business={selected} />}
           {tab === 'plan' && <PlanTab business={selected} onChange={load} />}
@@ -369,6 +370,70 @@ function Ads({ business }: { business: Business }) {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Marketing({ business }: { business: Business }) {
+  const { locale } = useLocale();
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [campaigns, setCampaigns] = useState<AdCampaign[]>([]);
+  useEffect(() => {
+    Promise.all([ownerOffers(business.id), ownerCoupons(business.id), ownerCampaigns(business.id)])
+      .then(([o, c, ca]) => { setOffers(o); setCoupons(c); setCampaigns(ca); });
+  }, [business.id]);
+
+  const activeOffers = offers.filter((o) => o.is_active).length;
+  const redemptions = coupons.reduce((s, c) => s + (c.used_count || 0), 0);
+  const impressions = campaigns.reduce((s, c) => s + (c.impressions || 0), 0);
+  const clicks = campaigns.reduce((s, c) => s + (c.clicks || 0), 0);
+  const ctr = impressions > 0 ? ((clicks / impressions) * 100).toFixed(1) : '0.0';
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card icon={Tag} label="عروض نشطة" value={formatNumber(activeOffers, locale)} color="bg-rose-500/15 text-rose-500" />
+        <Card icon={Ticket} label="مرات استخدام الكوبونات" value={formatNumber(redemptions, locale)} color="bg-teal-500/15 text-teal-500" />
+        <Card icon={Eye} label="ظهور الإعلانات" value={formatNumber(impressions, locale)} color="bg-blue-500/15 text-blue-500" />
+        <Card icon={MousePointerClick} label={`نقرات (CTR ${ctr}%)`} value={formatNumber(clicks, locale)} color="bg-amber-500/15 text-amber-500" />
+      </div>
+
+      <div className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+        <h3 className="font-bold font-arabic mb-4">أداء الحملات الإعلانية</h3>
+        {campaigns.length === 0 ? <EmptyState message="لا توجد حملات إعلانية بعد" /> : (
+          <div className="space-y-3">
+            {campaigns.map((c) => {
+              const rate = c.impressions > 0 ? ((c.clicks / c.impressions) * 100).toFixed(1) : '0.0';
+              return (
+                <div key={c.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-900">
+                  <span className="font-arabic text-sm font-semibold">{c.ad_product?.name_ar || c.placement}</span>
+                  <div className="flex gap-4 text-xs text-slate-500 dark:text-slate-400 font-arabic">
+                    <span>{formatNumber(c.impressions, locale)} ظهور</span>
+                    <span>{formatNumber(c.clicks, locale)} نقرة</span>
+                    <span className="text-teal-600 dark:text-teal-400 font-bold">CTR {rate}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+        <h3 className="font-bold font-arabic mb-4">أداء الكوبونات</h3>
+        {coupons.length === 0 ? <EmptyState message="لا توجد كوبونات بعد" /> : (
+          <div className="space-y-2">
+            {coupons.map((c) => (
+              <div key={c.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-50 dark:bg-navy-900">
+                <span className="font-bold text-sm" dir="ltr">{c.code}</span>
+                <span className="font-arabic text-sm text-slate-500 dark:text-slate-400">{c.title}</span>
+                <span className="font-arabic text-xs text-teal-600 dark:text-teal-400">استُخدم {formatNumber(c.used_count, locale)} مرة</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
