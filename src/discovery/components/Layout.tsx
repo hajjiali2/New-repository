@@ -26,6 +26,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <>
       <NavItem to="/" label={t('nav_home')} />
       <NavItem to="/categories" label={t('nav_categories')} />
+      <NavItem to="/products" label={t('products')} />
       <NavItem to="/cities" label={t('nav_cities')} />
       <NavItem to="/deals" label={t('nav_deals')} />
       <NavItem to="/blog" label={t('nav_blog')} />

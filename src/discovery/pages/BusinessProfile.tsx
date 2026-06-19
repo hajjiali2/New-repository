@@ -4,15 +4,18 @@ import {
   BadgeCheck, MapPin, Phone, Mail, Globe, MessageCircle, Star, Megaphone,
   Instagram, Twitter, Facebook, Tag, Ticket, Check, Copy, Send,
 } from 'lucide-react';
-import { Business, BusinessImage, Review, Offer, Coupon } from '../types';
+import { Business, BusinessImage, Review, Offer, Coupon, Product } from '../types';
 import {
   getBusinessBySlug, getBusinessImages, getBusinessReviews, getBusinessOffers,
   getBusinessCoupons, getSimilarBusinesses, submitReview, submitLead, incrementBusinessViews, redeemCoupon,
+  getBusinessProducts,
 } from '../api';
 import { useLocale } from '../context';
 import { localName } from '../utils';
 import SEO from '../components/SEO';
 import BusinessCard from '../components/BusinessCard';
+import ProductCard from '../components/ProductCard';
+import OrderModal from '../components/OrderModal';
 import { Rating, Badge, Loader, EmptyState } from '../components/ui';
 
 export default function BusinessProfile() {
@@ -23,9 +26,11 @@ export default function BusinessProfile() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [similar, setSimilar] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<string | null>(null);
+  const [buying, setBuying] = useState<Product | null>(null);
 
   // forms
   const [lead, setLead] = useState({ name: '', phone: '', email: '', message: '' });
@@ -42,12 +47,13 @@ export default function BusinessProfile() {
       setBiz(b);
       if (!b) { setLoading(false); return; }
       incrementBusinessViews(b.id, b.views_count).catch(() => {});
-      const [imgs, revs, ofs, cps, sim] = await Promise.all([
+      const [imgs, revs, ofs, cps, prods, sim] = await Promise.all([
         getBusinessImages(b.id), getBusinessReviews(b.id), getBusinessOffers(b.id),
-        getBusinessCoupons(b.id), getSimilarBusinesses(b),
+        getBusinessCoupons(b.id), getBusinessProducts(b.id), getSimilarBusinesses(b),
       ]);
       if (!active) return;
-      setImages(imgs as BusinessImage[]); setReviews(revs); setOffers(ofs); setCoupons(cps); setSimilar(sim);
+      setImages(imgs as BusinessImage[]); setReviews(revs); setOffers(ofs); setCoupons(cps);
+      setProducts((prods as Product[]).filter((p) => p.status === 'active')); setSimilar(sim);
       setLoading(false);
     });
     return () => { active = false; };
@@ -165,6 +171,15 @@ export default function BusinessProfile() {
                 <h2 className="text-xl font-bold font-arabic mb-3">معرض الصور</h2>
                 <div className="grid grid-cols-3 gap-3">
                   {images.map((img) => <img key={img.id} src={img.url} alt="" loading="lazy" className="w-full h-32 object-cover rounded-xl" />)}
+                </div>
+              </section>
+            )}
+
+            {products.length > 0 && (
+              <section>
+                <h2 className="text-xl font-bold font-arabic mb-3">{t('products')}</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {products.map((p) => <ProductCard key={p.id} product={p} onBuy={setBuying} />)}
                 </div>
               </section>
             )}
@@ -287,6 +302,8 @@ export default function BusinessProfile() {
           </section>
         )}
       </div>
+
+      {buying && <OrderModal product={buying} onClose={() => setBuying(null)} />}
     </>
   );
 }

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import * as Icons from 'lucide-react';
-import { Rocket, ShieldCheck, Headphones, MapPin as MapPinIcon, Quote, Star as StarIcon } from 'lucide-react';
+import { Rocket, ShieldCheck, Headphones, MapPin as MapPinIcon, Quote, Star as StarIcon, Eye } from 'lucide-react';
 import { Business, Category, City, Offer, BlogPost, Product } from '../types';
 import { listBusinesses, getCategories, getCities, listOffers, listPosts, listFeaturedProducts, publicStats, PublicStats } from '../api';
 import { useLocale } from '../context';
@@ -9,12 +8,8 @@ import { localName, formatNumber, formatPrice } from '../utils';
 import SEO from '../components/SEO';
 import SearchBar from '../components/SearchBar';
 import BusinessCard from '../components/BusinessCard';
+import CategoryIcon from '../components/CategoryIcon';
 import { SectionHeader, Loader } from '../components/ui';
-
-function CategoryIcon({ name, className }: { name: string; className?: string }) {
-  const Cmp = (Icons as unknown as Record<string, Icons.LucideIcon>)[name] || Icons.Store;
-  return <Cmp className={className} />;
-}
 
 export default function Home() {
   const { locale, t } = useLocale();
@@ -248,7 +243,7 @@ export default function Home() {
                     <h3 className="font-bold font-arabic line-clamp-2">{p.title}</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 font-arabic line-clamp-2 mt-1">{p.excerpt}</p>
                     <span className="text-xs text-slate-400 font-arabic mt-2 inline-flex items-center gap-1">
-                      <Icons.Eye className="w-3.5 h-3.5" />{formatNumber(p.views, locale)}
+                      <Eye className="w-3.5 h-3.5" />{formatNumber(p.views, locale)}
                     </span>
                   </div>
                 </Link>
