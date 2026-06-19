@@ -62,10 +62,69 @@ export interface Business {
   rating_count: number;
   views_count: number;
   leads_count: number;
+  cr_number: string;
+  vat_number: string;
+  contact_person: string;
+  mobile: string;
+  national_address: string;
+  cr_document_url: string;
+  verification_status: 'pending' | 'under_review' | 'approved' | 'rejected';
+  response_rate: number;
+  completion_score: number;
   created_at: string;
   updated_at: string;
   category?: Category | null;
   city?: City | null;
+}
+
+export interface Product {
+  id: string;
+  business_id: string;
+  name: string;
+  description: string;
+  price: number;
+  sale_price: number | null;
+  vat_percent: number;
+  image_url: string;
+  stock: number;
+  is_featured: boolean;
+  status: string;
+  created_at: string;
+  business?: Pick<Business, 'name' | 'slug' | 'logo_url'> | null;
+}
+
+export interface Order {
+  id: string;
+  business_id: string;
+  product_id: string | null;
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  quantity: number;
+  total: number;
+  status: 'new' | 'processing' | 'completed' | 'cancelled';
+  created_at: string;
+  product?: Pick<Product, 'name'> | null;
+}
+
+export interface SupportTicket {
+  id: string;
+  business_id: string;
+  subject: string;
+  message: string;
+  status: 'open' | 'pending' | 'closed';
+  priority: 'low' | 'normal' | 'high';
+  created_at: string;
+}
+
+export interface AppNotification {
+  id: string;
+  business_id: string;
+  title: string;
+  body: string;
+  type: string;
+  is_read: boolean;
+  created_at: string;
 }
 
 export interface BusinessImage {

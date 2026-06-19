@@ -14,6 +14,8 @@ import Deals from './pages/Deals';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import Pricing from './pages/Pricing';
+import MerchantLanding from './pages/MerchantLanding';
+import MerchantRegister from './pages/MerchantRegister';
 import Login from './pages/Login';
 import BusinessDashboard from './pages/dashboard/BusinessDashboard';
 import AdminDashboard from './pages/dashboard/AdminDashboard';
@@ -45,6 +47,8 @@ export default function DiscoveryApp() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/merchants" element={<MerchantLanding />} />
+            <Route path="/merchants/register" element={<MerchantRegister />} />
             <Route path="/login" element={<Login />} />
             <Route path="/dashboard" element={<Protected><BusinessDashboard /></Protected>} />
             <Route path="/affiliate" element={<Protected><AffiliateDashboard /></Protected>} />

@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import {
   Business, Category, City, Review, Offer, Coupon, Lead, SubscriptionPlan,
   AdProduct, AdCampaign, Invoice, Affiliate, Referral, Commission, BlogPost,
+  Product, Order, SupportTicket, AppNotification,
 } from './types';
 
 const BUSINESS_SELECT = '*, category:categories(*), city:cities(*)';
@@ -332,8 +333,116 @@ export async function requestPayout(affiliateId: string, amount: number, method:
 }
 
 // ---------------------------------------------------------------------------
+// Public homepage statistics
+// ---------------------------------------------------------------------------
+export interface PublicStats { merchants: number; products: number; cities: number; reviews: number; }
+export async function publicStats(): Promise<PublicStats> {
+  const head = { count: 'exact' as const, head: true };
+  const [m, p, c, r] = await Promise.all([
+    supabase.from('businesses').select('*', head).eq('status', 'active'),
+    supabase.from('products').select('*', head).eq('status', 'active'),
+    supabase.from('cities').select('*', head),
+    supabase.from('reviews').select('*', head).eq('status', 'approved'),
+  ]);
+  return { merchants: m.count ?? 0, products: p.count ?? 0, cities: c.count ?? 0, reviews: r.count ?? 0 };
+}
+
+// ---------------------------------------------------------------------------
+// Products & Orders (marketplace)
+// ---------------------------------------------------------------------------
+export async function listFeaturedProducts(limit = 8): Promise<Product[]> {
+  const { data } = await supabase.from('products')
+    .select('*, business:businesses(name, slug, logo_url)')
+    .eq('status', 'active').eq('is_featured', true)
+    .order('created_at', { ascending: false }).limit(limit);
+  return (data ?? []) as Product[];
+}
+export async function getBusinessProducts(businessId: string): Promise<Product[]> {
+  const { data } = await supabase.from('products').select('*').eq('business_id', businessId).order('created_at', { ascending: false });
+  return (data ?? []) as Product[];
+}
+export async function createProduct(input: Partial<Product>): Promise<void> {
+  const { error } = await supabase.from('products').insert(input);
+  if (error) throw error;
+}
+export async function updateProduct(id: string, patch: Partial<Product>): Promise<void> {
+  const { error } = await supabase.from('products').update(patch).eq('id', id);
+  if (error) throw error;
+}
+export async function deleteProduct(id: string): Promise<void> {
+  const { error } = await supabase.from('products').delete().eq('id', id);
+  if (error) throw error;
+}
+export async function placeOrder(input: Partial<Order>): Promise<void> {
+  const { error } = await supabase.from('orders').insert(input);
+  if (error) throw error;
+}
+export async function businessOrders(businessId: string): Promise<Order[]> {
+  const { data } = await supabase.from('orders').select('*, product:products(name)').eq('business_id', businessId).order('created_at', { ascending: false });
+  return (data ?? []) as Order[];
+}
+export async function updateOrderStatus(id: string, status: string): Promise<void> {
+  const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+  if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Support tickets & notifications
+// ---------------------------------------------------------------------------
+export async function businessTickets(businessId: string): Promise<SupportTicket[]> {
+  const { data } = await supabase.from('support_tickets').select('*').eq('business_id', businessId).order('created_at', { ascending: false });
+  return (data ?? []) as SupportTicket[];
+}
+export async function createTicket(input: Partial<SupportTicket>): Promise<void> {
+  const { error } = await supabase.from('support_tickets').insert(input);
+  if (error) throw error;
+}
+export async function businessNotifications(businessId: string): Promise<AppNotification[]> {
+  const { data } = await supabase.from('notifications').select('*').eq('business_id', businessId).order('created_at', { ascending: false });
+  return (data ?? []) as AppNotification[];
+}
+export async function markNotificationRead(id: string): Promise<void> {
+  await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+}
+
+// ---------------------------------------------------------------------------
+// Merchant registration (onboarding)
+// ---------------------------------------------------------------------------
+export interface MerchantInput {
+  name: string; description: string; category_id: string; city_id: string;
+  contact_person: string; mobile: string; email: string; whatsapp: string;
+  cr_number: string; vat_number: string; national_address: string;
+  cr_document_url: string; logo_url: string;
+}
+export async function registerMerchant(input: MerchantInput): Promise<Business> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('not authenticated');
+  const slug = (input.name || 'merchant').toLowerCase().trim()
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 6);
+  const { data, error } = await supabase.from('businesses').insert({
+    ...input, slug, owner_id: user.id, status: 'pending',
+    verification_status: input.cr_document_url ? 'under_review' : 'pending',
+    is_claimed: true, plan: 'free',
+    cover_url: `https://picsum.photos/seed/${slug}/1200/600`,
+  }).select(BUSINESS_SELECT).single();
+  if (error) throw error;
+  await supabase.from('notifications').insert({
+    business_id: (data as Business).id, title: 'تم استلام طلبك',
+    body: 'جارٍ مراجعة مستنداتك. سيتم تفعيل حسابك خلال 24 ساعة.', type: 'system',
+  });
+  return data as Business;
+}
+
+// ---------------------------------------------------------------------------
 // Admin
 // ---------------------------------------------------------------------------
+export async function adminSetVerification(id: string, verification_status: 'pending' | 'under_review' | 'approved' | 'rejected'): Promise<void> {
+  const patch: Partial<Business> = { verification_status };
+  if (verification_status === 'approved') { patch.is_verified = true; patch.status = 'active'; }
+  if (verification_status === 'rejected') { patch.is_verified = false; }
+  const { error } = await supabase.from('businesses').update(patch).eq('id', id);
+  if (error) throw error;
+}
 export async function adminAllBusinesses(): Promise<Business[]> {
   const { data } = await supabase.from('businesses').select(BUSINESS_SELECT).order('created_at', { ascending: false });
   return (data ?? []) as Business[];

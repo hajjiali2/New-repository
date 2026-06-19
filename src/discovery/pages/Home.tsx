@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as Icons from 'lucide-react';
-import { Business, Category, City, Offer, BlogPost } from '../types';
-import { listBusinesses, getCategories, getCities, listOffers, listPosts } from '../api';
+import { Rocket, ShieldCheck, Headphones, MapPin as MapPinIcon, Quote, Star as StarIcon } from 'lucide-react';
+import { Business, Category, City, Offer, BlogPost, Product } from '../types';
+import { listBusinesses, getCategories, getCities, listOffers, listPosts, listFeaturedProducts, publicStats, PublicStats } from '../api';
 import { useLocale } from '../context';
-import { localName, formatNumber } from '../utils';
+import { localName, formatNumber, formatPrice } from '../utils';
 import SEO from '../components/SEO';
 import SearchBar from '../components/SearchBar';
 import BusinessCard from '../components/BusinessCard';
@@ -24,6 +25,8 @@ export default function Home() {
   const [cities, setCities] = useState<City[]>([]);
   const [offers, setOffers] = useState<Offer[]>([]);
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState<PublicStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,10 +35,11 @@ export default function Home() {
       listBusinesses({ sponsored: true, limit: 4 }),
       listBusinesses({ sort: 'views', limit: 8 }),
       getCategories(), getCities(),
-      listOffers(6), listPosts(3),
-    ]).then(([f, s, tr, c, ci, o, p]) => {
+      listOffers(6), listPosts(3), listFeaturedProducts(8), publicStats(),
+    ]).then(([f, s, tr, c, ci, o, p, pr, st]) => {
       setFeatured(f); setSponsored(s); setTrending(tr);
       setCategories(c); setCities(ci); setOffers(o); setPosts(p);
+      setProducts(pr as Product[]); setStats(st as PublicStats);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -65,7 +69,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Statistics band */}
+      <section className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
+          {[
+            { v: stats?.merchants, label: 'تاجر' },
+            { v: stats?.products, label: 'منتج' },
+            { v: stats?.cities, label: 'مدينة' },
+            { v: stats?.reviews, label: 'تقييم' },
+          ].map((x, i) => (
+            <div key={i}>
+              <div className="text-3xl font-extrabold text-teal-600 dark:text-teal-400">{x.v != null ? formatNumber(x.v, locale) : '—'}+</div>
+              <div className="text-slate-500 dark:text-slate-400 font-arabic text-sm mt-1">{x.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
+        {/* Merchant CTA */}
+        <section className="rounded-3xl bg-gradient-to-r from-teal-600 to-emerald-700 text-white p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold font-arabic mb-2">هل لديك نشاط تجاري؟</h2>
+            <p className="text-white/80 font-arabic">انضم لأكبر منصة تجار في السعودية واحصل على أول 3 أشهر مجاناً.</p>
+          </div>
+          <Link to="/merchants" className="px-8 py-4 rounded-xl bg-white text-teal-700 font-bold font-arabic text-lg whitespace-nowrap inline-flex items-center gap-2"><Rocket className="w-5 h-5" />{t('join_now')}</Link>
+        </section>
+
         {/* Categories */}
         <section>
           <SectionHeader title={t('browse_categories')} href="/categories" viewAllLabel={t('view_all')} />
@@ -108,6 +138,31 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Featured Products */}
+        {products.length > 0 && (
+          <section>
+            <SectionHeader title={t('featured_products')} subtitle="منتجات مختارة من تجار موثوقين" />
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+              {products.map((p) => (
+                <div key={p.id} className="rounded-2xl overflow-hidden bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 hover:shadow-md transition-all group">
+                  <div className="relative h-40 overflow-hidden">
+                    <img src={p.image_url} alt={p.name} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    {p.sale_price && <span className="absolute top-2 start-2 px-2 py-0.5 rounded-md bg-rose-500 text-white text-xs font-bold">تخفيض</span>}
+                  </div>
+                  <div className="p-3">
+                    <h3 className="font-bold font-arabic text-sm line-clamp-1">{p.name}</h3>
+                    {p.business && <Link to={`/business/${p.business.slug}`} className="text-xs text-slate-400 font-arabic hover:text-teal-500">{p.business.name}</Link>}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-bold text-teal-600 dark:text-teal-400 text-sm">{formatPrice(Number(p.sale_price ?? p.price), 'SAR', locale)}</span>
+                      {p.sale_price && <span className="text-xs text-slate-400 line-through">{formatPrice(Number(p.price), 'SAR', locale)}</span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Cities */}
         <section>
           <SectionHeader title={t('explore_cities')} href="/cities" viewAllLabel={t('view_all')} />
@@ -141,6 +196,45 @@ export default function Home() {
             </div>
           </section>
         )}
+
+        {/* Why choose us */}
+        <section>
+          <SectionHeader title={t('why_choose_us')} subtitle="مزايا تجعلنا الخيار الأول للتجار" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: Rocket, title: 'تأسيس أسرع', desc: 'فعّل متجرك خلال دقائق.' },
+              { icon: ShieldCheck, title: 'تكلفة أقل', desc: 'اشتراك ثابت بلا عمولات.' },
+              { icon: Headphones, title: 'دعم مخصص', desc: 'فريق عربي على مدار الساعة.' },
+              { icon: MapPinIcon, title: 'خبرة سعودية', desc: 'منصة مصممة للسوق المحلي.' },
+            ].map((w, i) => (
+              <div key={i} className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 text-center">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center mx-auto mb-3"><w.icon className="w-5 h-5 text-white" /></div>
+                <h3 className="font-bold font-arabic text-sm">{w.title}</h3>
+                <p className="text-slate-500 dark:text-slate-400 font-arabic text-xs mt-1">{w.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section>
+          <SectionHeader title={t('testimonials')} subtitle="تجارب حقيقية من تجار على المنصة" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            {[
+              { name: 'خالد العمري', role: 'صاحب مطعم', text: 'زادت طلباتنا بشكل ملحوظ خلال أول شهرين على المنصة. الدعم ممتاز.' },
+              { name: 'نورة السالم', role: 'متجر أزياء', text: 'سهولة إضافة المنتجات وأدوات التسويق ساعدتني أصل لعملاء جدد بسرعة.' },
+              { name: 'عبدالله الشهري', role: 'خدمات مقاولات', text: 'شارة التوثيق أعطت عملي مصداقية كبيرة وزادت طلبات عروض الأسعار.' },
+            ].map((tst, i) => (
+              <div key={i} className="p-6 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+                <Quote className="w-7 h-7 text-teal-500/40 mb-3" />
+                <p className="text-slate-600 dark:text-slate-300 font-arabic leading-relaxed">{tst.text}</p>
+                <div className="flex items-center gap-1 mt-3 text-amber-400">{[1, 2, 3, 4, 5].map((s) => <StarIcon key={s} className="w-4 h-4 fill-amber-400" />)}</div>
+                <div className="mt-3 font-bold font-arabic">{tst.name}</div>
+                <div className="text-xs text-slate-400 font-arabic">{tst.role}</div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Blog */}
         {posts.length > 0 && (

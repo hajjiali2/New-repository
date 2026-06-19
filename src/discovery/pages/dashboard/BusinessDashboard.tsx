@@ -2,18 +2,22 @@ import { useEffect, useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Plus, Eye, MousePointerClick, Users, Tag, Ticket, Star, Megaphone, Crown,
-  Trash2, BarChart3, Store, Check,
+  Trash2, BarChart3, Store, Check, Package, ShoppingCart, Bell, LifeBuoy,
+  Sparkles, BadgeCheck, ShieldAlert, DollarSign,
 } from 'lucide-react';
 import {
   Business, Offer, Coupon, Lead, Review, AdCampaign, AdProduct, SubscriptionPlan,
+  Product, Order, SupportTicket, AppNotification, Category, City,
 } from '../../types';
 import {
   myBusinesses, createBusiness, ownerOffers, createOffer, deleteOffer,
   ownerCoupons, createCoupon, deleteCoupon, ownerLeads, updateLeadStatus,
   ownerReviews, respondToReview, ownerCampaigns, buyAd, getAdProducts,
   getPlans, subscribeBusiness, businessAnalytics, getCategories, getCities,
+  getBusinessProducts, createProduct, deleteProduct, businessOrders, updateOrderStatus,
+  businessTickets, createTicket, businessNotifications, markNotificationRead,
 } from '../../api';
-import { Category, City } from '../../types';
+import { generateProductDescription } from '../../ai';
 import { useLocale } from '../../context';
 import { localName, formatPrice, formatNumber, PLAN_BADGE } from '../../utils';
 import { getErrorMessage } from '../../../lib/errors';
@@ -21,7 +25,7 @@ import SEO from '../../components/SEO';
 import { Loader, EmptyState } from '../../components/ui';
 import CategoryIcon from '../../components/CategoryIcon';
 
-type Tab = 'overview' | 'offers' | 'coupons' | 'leads' | 'reviews' | 'ads' | 'plan';
+type Tab = 'overview' | 'products' | 'orders' | 'customers' | 'revenue' | 'offers' | 'coupons' | 'leads' | 'reviews' | 'ads' | 'notifications' | 'support' | 'plan';
 
 export default function BusinessDashboard() {
   const { t } = useLocale();
@@ -64,24 +68,28 @@ export default function BusinessDashboard() {
         <CreateBusiness onCreated={load} setError={setError} />
       ) : selected ? (
         <>
-          <div className="flex items-center gap-3 mb-6 p-4 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-3 mb-4 p-4 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
             <img src={selected.logo_url} alt="" className="w-12 h-12 rounded-xl object-cover" />
             <div className="flex-1">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="font-bold font-arabic">{selected.name}</h2>
                 <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${PLAN_BADGE[selected.plan]}`}>{selected.plan}</span>
-                <span className={`px-2 py-0.5 rounded-md text-xs font-arabic ${selected.status === 'active' ? 'bg-emerald-500/15 text-emerald-500' : 'bg-amber-500/15 text-amber-500'}`}>
-                  {selected.status === 'active' ? 'نشط' : 'قيد المراجعة'}
-                </span>
+                {selected.is_verified
+                  ? <span className="px-2 py-0.5 rounded-md text-xs font-arabic bg-teal-500/15 text-teal-500 inline-flex items-center gap-1"><BadgeCheck className="w-3 h-3" />تاجر موثّق</span>
+                  : <span className="px-2 py-0.5 rounded-md text-xs font-arabic bg-amber-500/15 text-amber-500">غير موثّق</span>}
               </div>
               <Link to={`/business/${selected.slug}`} className="text-xs text-teal-600 dark:text-teal-400 font-arabic hover:underline">عرض الصفحة العامة ←</Link>
             </div>
           </div>
 
+          <VerificationBanner business={selected} />
+
           <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
             {([
-              ['overview', BarChart3, 'نظرة عامة'], ['offers', Tag, t('offers')], ['coupons', Ticket, t('coupons')],
-              ['leads', Users, 'العملاء المحتملون'], ['reviews', Star, t('reviews')], ['ads', Megaphone, 'الإعلانات'], ['plan', Crown, 'الاشتراك'],
+              ['overview', BarChart3, 'نظرة عامة'], ['products', Package, t('products')], ['orders', ShoppingCart, t('orders')],
+              ['customers', Users, t('customers')], ['revenue', DollarSign, t('revenue')], ['offers', Tag, t('offers')], ['coupons', Ticket, t('coupons')],
+              ['leads', Users, 'العملاء المحتملون'], ['reviews', Star, t('reviews')], ['ads', Megaphone, 'الإعلانات'],
+              ['notifications', Bell, t('notifications')], ['support', LifeBuoy, t('support')], ['plan', Crown, 'الاشتراك'],
             ] as [Tab, typeof Tag, string][]).map(([key, Icon, label]) => (
               <button key={key} onClick={() => setTab(key)}
                 className={`px-4 py-2 rounded-lg text-sm font-arabic font-semibold whitespace-nowrap inline-flex items-center gap-1.5 transition-colors ${tab === key ? 'bg-teal-500 text-white' : 'bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10'}`}>
@@ -91,11 +99,17 @@ export default function BusinessDashboard() {
           </div>
 
           {tab === 'overview' && <Overview business={selected} />}
+          {tab === 'products' && <Products business={selected} />}
+          {tab === 'orders' && <Orders business={selected} />}
+          {tab === 'customers' && <Customers business={selected} />}
+          {tab === 'revenue' && <RevenueTab business={selected} />}
           {tab === 'offers' && <Offers business={selected} />}
           {tab === 'coupons' && <Coupons business={selected} />}
           {tab === 'leads' && <Leads business={selected} />}
           {tab === 'reviews' && <Reviews business={selected} />}
           {tab === 'ads' && <Ads business={selected} />}
+          {tab === 'notifications' && <Notifications business={selected} />}
+          {tab === 'support' && <Support business={selected} />}
           {tab === 'plan' && <PlanTab business={selected} onChange={load} />}
         </>
       ) : null}
@@ -356,6 +370,258 @@ function Ads({ business }: { business: Business }) {
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function VerificationBanner({ business }: { business: Business }) {
+  if (business.verification_status === 'approved') return null;
+  const map: Record<string, { text: string; cls: string }> = {
+    pending: { text: 'وثّق متجرك: ارفع السجل التجاري للحصول على شارة "تاجر موثّق" وزيادة ثقة العملاء.', cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
+    under_review: { text: 'مستنداتك قيد المراجعة. سيتم تفعيل شارة التوثيق خلال 24 ساعة.', cls: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+    rejected: { text: 'تم رفض المستندات. يرجى تحديث السجل التجاري وإعادة الإرسال.', cls: 'bg-rose-500/10 text-rose-500 border-rose-500/20' },
+  };
+  const v = map[business.verification_status] || map.pending;
+  return <div className={`mb-4 p-3 rounded-xl border text-sm font-arabic flex items-center gap-2 ${v.cls}`}><ShieldAlert className="w-4 h-4 flex-shrink-0" />{v.text}</div>;
+}
+
+function Products({ business }: { business: Business }) {
+  const { locale } = useLocale();
+  const [items, setItems] = useState<Product[]>([]);
+  const [form, setForm] = useState({ name: '', description: '', price: 0, keywords: '' });
+  const [genLoading, setGenLoading] = useState(false);
+  const load = () => getBusinessProducts(business.id).then(setItems);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [business.id]);
+
+  const genDesc = async () => {
+    if (!form.name) return;
+    setGenLoading(true);
+    try {
+      const cat = business.category ? localName(business.category, locale) : 'منتج';
+      const desc = await generateProductDescription(form.name, cat, form.keywords);
+      setForm((f) => ({ ...f, description: desc }));
+    } finally { setGenLoading(false); }
+  };
+
+  const add = async (e: FormEvent) => {
+    e.preventDefault();
+    await createProduct({
+      business_id: business.id, name: form.name, description: form.description, price: form.price,
+      vat_percent: 15, status: 'active', stock: 10,
+      image_url: `https://picsum.photos/seed/${encodeURIComponent(form.name)}-${Date.now()}/600/600`,
+    });
+    setForm({ name: '', description: '', price: 0, keywords: '' });
+    load();
+  };
+  const remove = async (id: string) => { await deleteProduct(id); load(); };
+
+  return (
+    <div className="space-y-6">
+      <form onSubmit={add} className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 space-y-3">
+        <h3 className="font-bold font-arabic">إضافة منتج</h3>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="اسم المنتج" className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 font-arabic text-sm" />
+          <input type="number" required value={form.price || ''} onChange={(e) => setForm({ ...form, price: +e.target.value })} placeholder="السعر (ر.س)" className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 text-sm" />
+        </div>
+        <input value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="كلمات مفتاحية للوصف (اختياري)" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 font-arabic text-sm" />
+        <div className="relative">
+          <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="وصف المنتج" rows={3} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 font-arabic text-sm" />
+          <button type="button" onClick={genDesc} disabled={genLoading || !form.name}
+            className="absolute bottom-2 end-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-fuchsia-500 to-purple-600 text-white text-xs font-bold font-arabic disabled:opacity-50">
+            <Sparkles className="w-3.5 h-3.5" />{genLoading ? 'جارٍ التوليد...' : 'وصف بالذكاء الاصطناعي'}
+          </button>
+        </div>
+        <button className="px-4 py-2.5 rounded-xl bg-teal-500 text-white font-bold font-arabic text-sm inline-flex items-center gap-1.5"><Plus className="w-4 h-4" />إضافة المنتج</button>
+      </form>
+
+      {items.length === 0 ? <EmptyState message="لا توجد منتجات بعد" /> : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          {items.map((p) => (
+            <div key={p.id} className="rounded-2xl overflow-hidden bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+              <img src={p.image_url} alt={p.name} className="w-full h-32 object-cover" />
+              <div className="p-3">
+                <h4 className="font-bold font-arabic text-sm line-clamp-1">{p.name}</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-arabic line-clamp-2 mt-1">{p.description}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="font-bold text-teal-600 dark:text-teal-400 text-sm">{formatPrice(Number(p.price), 'SAR', locale)}</span>
+                  <button onClick={() => remove(p.id)} className="text-slate-400 hover:text-rose-500"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Orders({ business }: { business: Business }) {
+  const { locale } = useLocale();
+  const [items, setItems] = useState<Order[]>([]);
+  const load = () => businessOrders(business.id).then(setItems);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [business.id]);
+  const setStatus = async (id: string, status: string) => { await updateOrderStatus(id, status); load(); };
+  const color: Record<string, string> = { new: 'bg-blue-500/15 text-blue-500', processing: 'bg-amber-500/15 text-amber-500', completed: 'bg-emerald-500/15 text-emerald-500', cancelled: 'bg-slate-500/15 text-slate-400' };
+  if (items.length === 0) return <EmptyState message="لا توجد طلبات بعد" />;
+  return (
+    <div className="overflow-x-auto rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+      <table className="w-full text-sm">
+        <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-400 font-arabic">
+          <th className="px-4 py-3 text-start">العميل</th><th className="px-4 py-3 text-start">المنتج</th><th className="px-4 py-3 text-start">الإجمالي</th><th className="px-4 py-3 text-start">الحالة</th>
+        </tr></thead>
+        <tbody>
+          {items.map((o) => (
+            <tr key={o.id} className="border-b border-slate-100 dark:border-white/5">
+              <td className="px-4 py-3 font-arabic">{o.customer_name}</td>
+              <td className="px-4 py-3 font-arabic">{o.product?.name || '—'}</td>
+              <td className="px-4 py-3">{formatPrice(Number(o.total), 'SAR', locale)}</td>
+              <td className="px-4 py-3">
+                <select value={o.status} onChange={(e) => setStatus(o.id, e.target.value)} className={`px-2 py-1 rounded-md text-xs font-arabic ${color[o.status]}`}>
+                  <option value="new">جديد</option><option value="processing">قيد المعالجة</option><option value="completed">مكتمل</option><option value="cancelled">ملغى</option>
+                </select>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function Customers({ business }: { business: Business }) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  useEffect(() => { businessOrders(business.id).then(setOrders); }, [business.id]);
+  const byCustomer = new Map<string, { name: string; phone: string; orders: number; total: number }>();
+  orders.forEach((o) => {
+    const key = o.customer_phone || o.customer_name;
+    const cur = byCustomer.get(key) || { name: o.customer_name, phone: o.customer_phone, orders: 0, total: 0 };
+    cur.orders += 1; cur.total += Number(o.total);
+    byCustomer.set(key, cur);
+  });
+  const customers = Array.from(byCustomer.values()).sort((a, b) => b.total - a.total);
+  if (customers.length === 0) return <EmptyState message="لا يوجد عملاء بعد" />;
+  return (
+    <div className="overflow-x-auto rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+      <table className="w-full text-sm">
+        <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-400 font-arabic">
+          <th className="px-4 py-3 text-start">العميل</th><th className="px-4 py-3 text-start">الجوال</th><th className="px-4 py-3 text-start">الطلبات</th><th className="px-4 py-3 text-start">إجمالي الإنفاق</th>
+        </tr></thead>
+        <tbody>{customers.map((c, i) => (
+          <tr key={i} className="border-b border-slate-100 dark:border-white/5">
+            <td className="px-4 py-3 font-arabic">{c.name}</td><td className="px-4 py-3" dir="ltr">{c.phone}</td><td className="px-4 py-3">{c.orders}</td><td className="px-4 py-3 font-bold">{Math.round(c.total)} ر.س</td>
+          </tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+function RevenueTab({ business }: { business: Business }) {
+  const { locale } = useLocale();
+  const [orders, setOrders] = useState<Order[]>([]);
+  useEffect(() => { businessOrders(business.id).then(setOrders); }, [business.id]);
+  const completed = orders.filter((o) => o.status === 'completed');
+  const total = completed.reduce((s, o) => s + Number(o.total), 0);
+  // group by day-of-month bucket (last 6 weeks-ish): simple 7-bucket bar chart
+  const buckets = Array.from({ length: 7 }, () => 0);
+  completed.forEach((o) => {
+    const d = Math.min(6, Math.floor((Date.now() - new Date(o.created_at).getTime()) / (5 * 864e5)));
+    buckets[6 - d] += Number(o.total);
+  });
+  const max = Math.max(...buckets, 1);
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
+          <span className="font-arabic text-sm opacity-80">إجمالي الإيرادات (مكتملة)</span>
+          <div className="text-3xl font-extrabold">{formatPrice(total, 'SAR', locale)}</div>
+        </div>
+        <div className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+          <span className="font-arabic text-sm text-slate-400">عدد الطلبات</span>
+          <div className="text-3xl font-extrabold">{formatNumber(orders.length, locale)}</div>
+        </div>
+        <div className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+          <span className="font-arabic text-sm text-slate-400">متوسط قيمة الطلب</span>
+          <div className="text-3xl font-extrabold">{completed.length ? Math.round(total / completed.length) : 0} ر.س</div>
+        </div>
+      </div>
+      <div className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+        <h3 className="font-bold font-arabic mb-4">منحنى الإيرادات</h3>
+        <div className="flex items-end gap-2 h-40">
+          {buckets.map((v, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center justify-end gap-1">
+              <div className="w-full rounded-t-lg bg-gradient-to-t from-teal-500 to-emerald-400" style={{ height: `${(v / max) * 100}%`, minHeight: 4 }} />
+              <span className="text-[10px] text-slate-400">{i + 1}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Notifications({ business }: { business: Business }) {
+  const [items, setItems] = useState<AppNotification[]>([]);
+  const load = () => businessNotifications(business.id).then(setItems);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [business.id]);
+  const read = async (id: string) => { await markNotificationRead(id); load(); };
+  if (items.length === 0) return <EmptyState message="لا توجد إشعارات" />;
+  return (
+    <div className="space-y-2">
+      {items.map((n) => (
+        <div key={n.id} className={`p-4 rounded-xl border flex items-start justify-between gap-3 ${n.is_read ? 'bg-white dark:bg-navy-800/60 border-slate-200 dark:border-white/10' : 'bg-teal-500/5 border-teal-500/20'}`}>
+          <div className="flex items-start gap-3">
+            <Bell className={`w-5 h-5 mt-0.5 ${n.is_read ? 'text-slate-400' : 'text-teal-500'}`} />
+            <div><h4 className="font-bold font-arabic text-sm">{n.title}</h4><p className="text-sm text-slate-500 dark:text-slate-400 font-arabic">{n.body}</p></div>
+          </div>
+          {!n.is_read && <button onClick={() => read(n.id)} className="text-xs text-teal-600 dark:text-teal-400 font-arabic whitespace-nowrap">تعليم كمقروء</button>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Support({ business }: { business: Business }) {
+  const [items, setItems] = useState<SupportTicket[]>([]);
+  const [form, setForm] = useState({ subject: '', message: '', priority: 'normal' });
+  const load = () => businessTickets(business.id).then(setItems);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { load(); }, [business.id]);
+  const add = async (e: FormEvent) => {
+    e.preventDefault();
+    await createTicket({ business_id: business.id, subject: form.subject, message: form.message, priority: form.priority as 'low' | 'normal' | 'high', status: 'open' });
+    setForm({ subject: '', message: '', priority: 'normal' }); load();
+  };
+  const color: Record<string, string> = { open: 'bg-blue-500/15 text-blue-500', pending: 'bg-amber-500/15 text-amber-500', closed: 'bg-slate-500/15 text-slate-400' };
+  return (
+    <div className="space-y-6">
+      <form onSubmit={add} className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 space-y-3">
+        <h3 className="font-bold font-arabic">فتح تذكرة دعم</h3>
+        <input required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="الموضوع" className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 font-arabic text-sm" />
+        <textarea required value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="تفاصيل المشكلة" rows={3} className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 font-arabic text-sm" />
+        <div className="flex items-center gap-2">
+          <select value={form.priority} onChange={(e) => setForm({ ...form, priority: e.target.value })} className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 font-arabic text-sm">
+            <option value="low">أولوية منخفضة</option><option value="normal">عادية</option><option value="high">عاجلة</option>
+          </select>
+          <button className="px-4 py-2.5 rounded-xl bg-teal-500 text-white font-bold font-arabic text-sm">إرسال</button>
+        </div>
+      </form>
+      {items.length === 0 ? <EmptyState message="لا توجد تذاكر" /> : (
+        <div className="space-y-2">
+          {items.map((tk) => (
+            <div key={tk.id} className="p-4 rounded-xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+              <div className="flex items-center justify-between">
+                <span className="font-bold font-arabic">{tk.subject}</span>
+                <span className={`px-2 py-0.5 rounded-md text-xs font-arabic ${color[tk.status]}`}>{tk.status}</span>
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-arabic mt-1">{tk.message}</p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

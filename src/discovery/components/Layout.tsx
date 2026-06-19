@@ -1,8 +1,10 @@
 import { ReactNode, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Compass, Moon, Sun, Menu, X, LayoutDashboard, Shield, LogOut, Plus } from 'lucide-react';
+import { Compass, Moon, Sun, Menu, X, LayoutDashboard, Shield, LogOut, Store } from 'lucide-react';
 import { useTheme, useLocale, useAuth } from '../context';
 import { cn } from '../utils';
+import { CampaignBanner, StickyCTA, ExitIntentPopup } from './Conversion';
+import AIAssistant from './AIAssistant';
 
 function NavItem({ to, label }: { to: string; label: string }) {
   return (
@@ -28,11 +30,13 @@ export default function Layout({ children }: { children: ReactNode }) {
       <NavItem to="/deals" label={t('nav_deals')} />
       <NavItem to="/blog" label={t('nav_blog')} />
       <NavItem to="/pricing" label={t('nav_pricing')} />
+      <NavItem to="/merchants" label={t('nav_merchants')} />
     </>
   );
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-navy-950 text-slate-900 dark:text-white transition-colors">
+      <CampaignBanner />
       <header className="sticky top-0 z-50 bg-white/90 dark:bg-navy-900/90 backdrop-blur border-b border-slate-200 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-4">
@@ -67,9 +71,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </button>
                 </div>
               ) : (
-                <Link to="/login" className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-sm font-bold font-arabic hover:from-teal-600 hover:to-emerald-700 transition-all">
-                  {t('login')}
-                </Link>
+                <div className="hidden sm:flex items-center gap-2">
+                  <Link to="/login" className="px-3 py-2 rounded-lg text-sm font-arabic text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
+                    {t('login')}
+                  </Link>
+                  <Link to="/merchants/register" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-sm font-bold font-arabic hover:from-teal-600 hover:to-emerald-700 transition-all">
+                    <Store className="w-4 h-4" />{t('join_now')}
+                  </Link>
+                </div>
               )}
               <button onClick={() => setOpen(!open)} className="lg:hidden w-9 h-9 rounded-lg flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10">
                 {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -124,8 +133,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
           <div>
             <h4 className="font-bold font-arabic mb-3">{t('add_business')}</h4>
-            <Link to="/dashboard" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 text-sm font-bold font-arabic hover:bg-teal-500/20">
-              <Plus className="w-4 h-4" />{t('add_business')}
+            <Link to="/merchants/register" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 text-sm font-bold font-arabic hover:bg-teal-500/20">
+              <Store className="w-4 h-4" />{t('join_now')}
             </Link>
           </div>
         </div>
@@ -133,6 +142,10 @@ export default function Layout({ children }: { children: ReactNode }) {
           © 2026 {t('brand')} — جميع الحقوق محفوظة
         </div>
       </footer>
+
+      <StickyCTA />
+      <ExitIntentPopup />
+      <AIAssistant />
     </div>
   );
 }

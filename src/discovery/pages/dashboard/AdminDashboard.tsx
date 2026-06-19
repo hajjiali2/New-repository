@@ -6,6 +6,7 @@ import {
 import {
   AdminStats, adminStats, adminAllBusinesses, adminUpdateBusiness, adminAllReviews,
   adminModerateReview, adminAllLeads, adminCampaigns, adminAffiliates, adminInvoices,
+  adminSetVerification,
 } from '../../api';
 import { Business, Review, Lead, AdCampaign, Affiliate, Invoice } from '../../types';
 import { useLocale } from '../../context';
@@ -97,36 +98,51 @@ function Overview() {
   );
 }
 
+const VERIF_BADGE: Record<string, string> = {
+  pending: 'bg-slate-500/15 text-slate-400', under_review: 'bg-blue-500/15 text-blue-500',
+  approved: 'bg-teal-500/15 text-teal-500', rejected: 'bg-rose-500/15 text-rose-500',
+};
+const VERIF_LABEL: Record<string, string> = { pending: 'لم يُوثّق', under_review: 'قيد المراجعة', approved: 'موثّق', rejected: 'مرفوض' };
+
 function Businesses() {
   const { locale } = useLocale();
   const [items, setItems] = useState<Business[]>([]);
+  const [filter, setFilter] = useState<'all' | 'verify'>('all');
   const load = () => adminAllBusinesses().then(setItems);
   useEffect(() => { load(); }, []);
   const toggle = async (b: Business, patch: Partial<Business>) => { await adminUpdateBusiness(b.id, patch); load(); };
+  const verify = async (b: Business, status: 'approved' | 'rejected') => { await adminSetVerification(b.id, status); load(); };
+  const rows = filter === 'verify' ? items.filter((b) => b.verification_status === 'under_review' || b.cr_document_url) : items;
   return (
-    <div className="overflow-x-auto rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
-      <table className="w-full text-sm">
-        <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-400 font-arabic">
-          <th className="px-4 py-3 text-start">النشاط</th><th className="px-4 py-3 text-start">الخطة</th><th className="px-4 py-3 text-start">الحالة</th><th className="px-4 py-3 text-start">إجراءات</th>
-        </tr></thead>
-        <tbody>
-          {items.map((b) => (
-            <tr key={b.id} className="border-b border-slate-100 dark:border-white/5">
-              <td className="px-4 py-3 font-arabic">{b.name}<div className="text-xs text-slate-400">{b.category ? localName(b.category, locale) : ''}</div></td>
-              <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-md text-xs font-bold ${PLAN_BADGE[b.plan]}`}>{b.plan}</span></td>
-              <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-md text-xs font-arabic ${b.status === 'active' ? 'bg-emerald-500/15 text-emerald-500' : b.status === 'pending' ? 'bg-amber-500/15 text-amber-500' : 'bg-rose-500/15 text-rose-500'}`}>{b.status}</span></td>
-              <td className="px-4 py-3">
-                <div className="flex gap-1.5 flex-wrap">
-                  {b.status !== 'active' && <button onClick={() => toggle(b, { status: 'active' })} className="px-2 py-1 rounded-md bg-emerald-500/15 text-emerald-500 text-xs font-arabic">تفعيل</button>}
-                  <button onClick={() => toggle(b, { is_featured: !b.is_featured })} className={`px-2 py-1 rounded-md text-xs font-arabic ${b.is_featured ? 'bg-amber-500 text-white' : 'bg-amber-500/15 text-amber-500'}`}>مميّز</button>
-                  <button onClick={() => toggle(b, { is_sponsored: !b.is_sponsored })} className={`px-2 py-1 rounded-md text-xs font-arabic ${b.is_sponsored ? 'bg-fuchsia-500 text-white' : 'bg-fuchsia-500/15 text-fuchsia-500'}`}>ممول</button>
-                  <button onClick={() => toggle(b, { is_verified: !b.is_verified })} className={`px-2 py-1 rounded-md text-xs font-arabic inline-flex items-center gap-1 ${b.is_verified ? 'bg-teal-500 text-white' : 'bg-teal-500/15 text-teal-500'}`}><BadgeCheck className="w-3 h-3" />توثيق</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="space-y-3">
+      <div className="flex gap-2">
+        <button onClick={() => setFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-arabic ${filter === 'all' ? 'bg-fuchsia-500 text-white' : 'bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10'}`}>الكل</button>
+        <button onClick={() => setFilter('verify')} className={`px-3 py-1.5 rounded-lg text-xs font-arabic ${filter === 'verify' ? 'bg-fuchsia-500 text-white' : 'bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10'}`}>طلبات التوثيق</button>
+      </div>
+      <div className="overflow-x-auto rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10">
+        <table className="w-full text-sm">
+          <thead><tr className="border-b border-slate-200 dark:border-white/10 text-slate-400 font-arabic">
+            <th className="px-4 py-3 text-start">النشاط</th><th className="px-4 py-3 text-start">السجل/الضريبي</th><th className="px-4 py-3 text-start">التوثيق</th><th className="px-4 py-3 text-start">إجراءات</th>
+          </tr></thead>
+          <tbody>
+            {rows.map((b) => (
+              <tr key={b.id} className="border-b border-slate-100 dark:border-white/5">
+                <td className="px-4 py-3 font-arabic">{b.name}<div className="text-xs text-slate-400">{b.category ? localName(b.category, locale) : ''} · <span className={`px-1.5 rounded ${PLAN_BADGE[b.plan]}`}>{b.plan}</span></div></td>
+                <td className="px-4 py-3 text-xs" dir="ltr">{b.cr_number || '—'}<div className="text-slate-400">{b.vat_number || ''}</div></td>
+                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-md text-xs font-arabic ${VERIF_BADGE[b.verification_status]}`}>{VERIF_LABEL[b.verification_status]}</span></td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-1.5 flex-wrap">
+                    {b.verification_status !== 'approved' && <button onClick={() => verify(b, 'approved')} className="px-2 py-1 rounded-md bg-teal-500/15 text-teal-500 text-xs font-arabic inline-flex items-center gap-1"><BadgeCheck className="w-3 h-3" />توثيق</button>}
+                    {b.verification_status !== 'rejected' && <button onClick={() => verify(b, 'rejected')} className="px-2 py-1 rounded-md bg-rose-500/15 text-rose-500 text-xs font-arabic">رفض</button>}
+                    <button onClick={() => toggle(b, { is_featured: !b.is_featured })} className={`px-2 py-1 rounded-md text-xs font-arabic ${b.is_featured ? 'bg-amber-500 text-white' : 'bg-amber-500/15 text-amber-500'}`}>مميّز</button>
+                    <button onClick={() => toggle(b, { is_sponsored: !b.is_sponsored })} className={`px-2 py-1 rounded-md text-xs font-arabic ${b.is_sponsored ? 'bg-fuchsia-500 text-white' : 'bg-fuchsia-500/15 text-fuchsia-500'}`}>ممول</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -30,6 +30,7 @@ export default function BusinessProfile() {
   // forms
   const [lead, setLead] = useState({ name: '', phone: '', email: '', message: '' });
   const [leadSent, setLeadSent] = useState(false);
+  const [quote, setQuote] = useState(false);
   const [rev, setRev] = useState({ reviewer_name: '', rating: 5, title: '', body: '' });
   const [revSent, setRevSent] = useState(false);
 
@@ -55,7 +56,7 @@ export default function BusinessProfile() {
   const sendLead = async (e: FormEvent) => {
     e.preventDefault();
     if (!biz) return;
-    await submitLead({ business_id: biz.id, ...lead });
+    await submitLead({ business_id: biz.id, ...lead, source: quote ? 'quote' : 'profile' });
     setLeadSent(true);
     setLead({ name: '', phone: '', email: '', message: '' });
   };
@@ -124,6 +125,24 @@ export default function BusinessProfile() {
               <Rating value={Number(biz.rating_avg)} count={biz.rating_count} />
               {biz.city && <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4" />{localName(biz.city, locale)}</span>}
               {biz.category && <span className="px-2 py-0.5 rounded-md bg-teal-500/10 text-teal-600 dark:text-teal-400">{localName(biz.category, locale)}</span>}
+            </div>
+            {/* Trust signals */}
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {biz.response_rate > 0 && <span className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-arabic font-semibold">{t('response_rate')}: {biz.response_rate}%</span>}
+              {biz.completion_score > 0 && <span className="px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-arabic font-semibold">{t('completion_score')}: {biz.completion_score}%</span>}
+              {biz.is_verified && <span className="px-2.5 py-1 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 text-xs font-arabic font-semibold inline-flex items-center gap-1"><BadgeCheck className="w-3.5 h-3.5" />{t('verified_merchant')}</span>}
+            </div>
+            {/* Quick actions */}
+            <div className="flex items-center gap-2 mt-3 flex-wrap">
+              {biz.whatsapp && (
+                <a href={`https://wa.me/${biz.whatsapp}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 text-white text-sm font-bold font-arabic hover:bg-emerald-600">
+                  <MessageCircle className="w-4 h-4" />{t('whatsapp')}
+                </a>
+              )}
+              <button onClick={() => { setQuote(true); document.getElementById('lead-form')?.scrollIntoView({ behavior: 'smooth' }); }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-600 text-white text-sm font-bold font-arabic">
+                <Send className="w-4 h-4" />{t('request_quote')}
+              </button>
             </div>
           </div>
         </div>
@@ -243,8 +262,8 @@ export default function BusinessProfile() {
               )}
             </div>
 
-            <form onSubmit={sendLead} className="rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 p-5 space-y-3">
-              <h3 className="font-bold font-arabic">{t('contact_business')}</h3>
+            <form id="lead-form" onSubmit={sendLead} className="rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 p-5 space-y-3">
+              <h3 className="font-bold font-arabic">{quote ? t('request_quote') : t('contact_business')}</h3>
               {leadSent && <p className="text-emerald-500 text-sm font-arabic">تم الإرسال! سيتواصل معك النشاط قريباً.</p>}
               <input value={lead.name} onChange={(e) => setLead({ ...lead, name: e.target.value })} placeholder="الاسم" required
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-900 text-sm font-arabic" />
