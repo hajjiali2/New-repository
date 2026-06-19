@@ -8,7 +8,7 @@ Single-product app: **AI Hub Arabia**, a client-side Vite + React + TypeScript +
 ### Standard commands (see `package.json` scripts)
 - Dev server: `npm run dev` (Vite, http://localhost:5173)
 - Build: `npm run build` · Preview built app: `npm run preview`
-- Lint: `npm run lint` · Typecheck: `npm run typecheck`
+- Lint: `npm run lint` · Typecheck: `npm run typecheck` · Tests: `npm run test` (Vitest, unit tests under `src/**/*.test.ts`)
 
 ### Required environment (.env — gitignored, must be recreated each VM)
 The app reads `import.meta.env` at module load and calls `createClient(...)` immediately, so **the app will not render without a valid `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`**. Create `/workspace/.env`:
