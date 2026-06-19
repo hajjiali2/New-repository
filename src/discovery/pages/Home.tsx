@@ -49,9 +49,7 @@ export default function Home() {
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, white 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 text-center">
           <h1 className="text-3xl sm:text-5xl font-extrabold font-arabic leading-tight mb-4">{t('tagline')}</h1>
-          <p className="text-white/80 font-arabic text-lg mb-8 max-w-2xl mx-auto">
-            مطاعم، مقاهي، فنادق، عيادات، متاجر وخدمات — كل ما تبحث عنه في مكان واحد.
-          </p>
+          <p className="text-white/80 font-arabic text-lg mb-8 max-w-2xl mx-auto">{t('home_hero_sub')}</p>
           <SearchBar large />
           <div className="flex flex-wrap justify-center gap-2 mt-6">
             {categories.slice(0, 6).map((c) => (
@@ -68,10 +66,10 @@ export default function Home() {
       <section className="bg-white dark:bg-navy-900 border-b border-slate-200 dark:border-white/10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {[
-            { v: stats?.merchants, label: 'تاجر' },
-            { v: stats?.products, label: 'منتج' },
-            { v: stats?.cities, label: 'مدينة' },
-            { v: stats?.reviews, label: 'تقييم' },
+            { v: stats?.merchants, label: t('stat_merchant') },
+            { v: stats?.products, label: t('stat_product') },
+            { v: stats?.cities, label: t('stat_city') },
+            { v: stats?.reviews, label: t('stat_review') },
           ].map((x, i) => (
             <div key={i}>
               <div className="text-3xl font-extrabold text-teal-600 dark:text-teal-400">{x.v != null ? formatNumber(x.v, locale) : '—'}+</div>
@@ -85,8 +83,8 @@ export default function Home() {
         {/* Merchant CTA */}
         <section className="rounded-3xl bg-gradient-to-r from-teal-600 to-emerald-700 text-white p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold font-arabic mb-2">هل لديك نشاط تجاري؟</h2>
-            <p className="text-white/80 font-arabic">انضم لأكبر منصة تجار في السعودية واحصل على أول 3 أشهر مجاناً.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold font-arabic mb-2">{t('home_cta_title')}</h2>
+            <p className="text-white/80 font-arabic">{t('home_cta_sub')}</p>
           </div>
           <Link to="/merchants" className="px-8 py-4 rounded-xl bg-white text-teal-700 font-bold font-arabic text-lg whitespace-nowrap inline-flex items-center gap-2"><Rocket className="w-5 h-5" />{t('join_now')}</Link>
         </section>
@@ -109,7 +107,7 @@ export default function Home() {
 
         {/* Featured */}
         <section>
-          <SectionHeader title={t('featured')} subtitle="أعمال مختارة بعناية" />
+          <SectionHeader title={t('featured')} subtitle={t('featured_sub')} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {featured.map((b) => <BusinessCard key={b.id} business={b} />)}
           </div>
@@ -127,7 +125,7 @@ export default function Home() {
 
         {/* Trending */}
         <section>
-          <SectionHeader title={t('trending')} subtitle="الأكثر مشاهدة" />
+          <SectionHeader title={t('trending')} subtitle={t('trending_sub')} />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {trending.slice(0, 4).map((b) => <BusinessCard key={b.id} business={b} />)}
           </div>
@@ -136,7 +134,7 @@ export default function Home() {
         {/* Featured Products */}
         {products.length > 0 && (
           <section>
-            <SectionHeader title={t('featured_products')} subtitle="منتجات مختارة من تجار موثوقين" />
+            <SectionHeader title={t('featured_products')} subtitle={t('featured_products_sub')} />
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
               {products.map((p) => (
                 <div key={p.id} className="rounded-2xl overflow-hidden bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 hover:shadow-md transition-all group">
@@ -194,13 +192,13 @@ export default function Home() {
 
         {/* Why choose us */}
         <section>
-          <SectionHeader title={t('why_choose_us')} subtitle="مزايا تجعلنا الخيار الأول للتجار" />
+          <SectionHeader title={t('why_choose_us')} subtitle={t('why_choose_us_sub')} />
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { icon: Rocket, title: 'تأسيس أسرع', desc: 'فعّل متجرك خلال دقائق.' },
-              { icon: ShieldCheck, title: 'تكلفة أقل', desc: 'اشتراك ثابت بلا عمولات.' },
-              { icon: Headphones, title: 'دعم مخصص', desc: 'فريق عربي على مدار الساعة.' },
-              { icon: MapPinIcon, title: 'خبرة سعودية', desc: 'منصة مصممة للسوق المحلي.' },
+              { icon: Rocket, title: t('why_faster'), desc: t('why_faster_d') },
+              { icon: ShieldCheck, title: t('why_cost'), desc: t('why_cost_d') },
+              { icon: Headphones, title: t('why_support'), desc: t('why_support_d') },
+              { icon: MapPinIcon, title: t('why_expertise'), desc: t('why_expertise_d') },
             ].map((w, i) => (
               <div key={i} className="p-5 rounded-2xl bg-white dark:bg-navy-800/60 border border-slate-200 dark:border-white/10 text-center">
                 <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center mx-auto mb-3"><w.icon className="w-5 h-5 text-white" /></div>
@@ -213,7 +211,7 @@ export default function Home() {
 
         {/* Testimonials */}
         <section>
-          <SectionHeader title={t('testimonials')} subtitle="تجارب حقيقية من تجار على المنصة" />
+          <SectionHeader title={t('testimonials')} subtitle={t('testimonials_sub')} />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             {[
               { name: 'خالد العمري', role: 'صاحب مطعم', text: 'زادت طلباتنا بشكل ملحوظ خلال أول شهرين على المنصة. الدعم ممتاز.' },

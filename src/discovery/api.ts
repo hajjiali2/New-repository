@@ -373,6 +373,13 @@ export async function listFeaturedProducts(limit = 8): Promise<Product[]> {
     .order('created_at', { ascending: false }).limit(limit);
   return (data ?? []) as Product[];
 }
+export async function getProductById(id: string): Promise<Product | null> {
+  const { data } = await supabase.from('products')
+    .select('*, business:businesses(name, slug, logo_url)')
+    .eq('id', id).maybeSingle();
+  return (data as Product | null) ?? null;
+}
+
 export async function getBusinessProducts(businessId: string): Promise<Product[]> {
   const { data } = await supabase.from('products').select('*').eq('business_id', businessId).order('created_at', { ascending: false });
   return (data ?? []) as Product[];

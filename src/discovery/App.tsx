@@ -12,6 +12,7 @@ const CityDetail = lazy(() => import('./pages/CityDetail'));
 const SearchPage = lazy(() => import('./pages/Search'));
 const BusinessProfile = lazy(() => import('./pages/BusinessProfile'));
 const Products = lazy(() => import('./pages/Products'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Deals = lazy(() => import('./pages/Deals'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
@@ -47,6 +48,7 @@ export default function DiscoveryApp() {
               <Route path="/search" element={<SearchPage />} />
               <Route path="/business/:slug" element={<BusinessProfile />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/deals" element={<Deals />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
