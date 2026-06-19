@@ -1,27 +1,32 @@
 import { useEffect, useState } from 'react';
-import { Product } from '../types';
-import { listProducts, ProductFilter } from '../api';
+import { Product, Category } from '../types';
+import { listProducts, ProductFilter, getCategories } from '../api';
 import { useLocale } from '../context';
+import { localName } from '../utils';
 import SEO from '../components/SEO';
 import ProductCard from '../components/ProductCard';
 import OrderModal from '../components/OrderModal';
 import { Loader, SectionHeader, EmptyState } from '../components/ui';
 
 export default function Products() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [items, setItems] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
   const [sort, setSort] = useState<ProductFilter['sort']>('newest');
+  const [categoryId, setCategoryId] = useState('');
   const [buying, setBuying] = useState<Product | null>(null);
+
+  useEffect(() => { getCategories().then(setCategories); }, []);
 
   useEffect(() => {
     setLoading(true);
     const handler = setTimeout(() => {
-      listProducts({ q: q || undefined, sort }).then(setItems).finally(() => setLoading(false));
+      listProducts({ q: q || undefined, sort, categoryId: categoryId || undefined }).then(setItems).finally(() => setLoading(false));
     }, 250);
     return () => clearTimeout(handler);
-  }, [q, sort]);
+  }, [q, sort, categoryId]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -31,6 +36,11 @@ export default function Products() {
       <div className="flex flex-wrap gap-3 mb-6">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث عن منتج..."
           className="flex-1 min-w-48 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 font-arabic text-sm focus:outline-none focus:border-teal-400" />
+        <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
+          className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 font-arabic text-sm">
+          <option value="">كل الفئات</option>
+          {categories.map((c) => <option key={c.id} value={c.id}>{localName(c, locale)}</option>)}
+        </select>
         <select value={sort} onChange={(e) => setSort(e.target.value as ProductFilter['sort'])}
           className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-navy-800 font-arabic text-sm">
           <option value="newest">الأحدث</option>

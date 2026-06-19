@@ -350,9 +350,13 @@ export async function publicStats(): Promise<PublicStats> {
 // ---------------------------------------------------------------------------
 // Products & Orders (marketplace)
 // ---------------------------------------------------------------------------
-export interface ProductFilter { q?: string; sort?: 'newest' | 'price_asc' | 'price_desc'; limit?: number; }
+export interface ProductFilter { q?: string; sort?: 'newest' | 'price_asc' | 'price_desc'; categoryId?: string; limit?: number; }
 export async function listProducts(opts: ProductFilter = {}): Promise<Product[]> {
-  let q = supabase.from('products').select('*, business:businesses(name, slug, logo_url)').eq('status', 'active');
+  const select = opts.categoryId
+    ? '*, business:businesses!inner(name, slug, logo_url, category_id)'
+    : '*, business:businesses(name, slug, logo_url)';
+  let q = supabase.from('products').select(select).eq('status', 'active');
+  if (opts.categoryId) q = q.eq('business.category_id', opts.categoryId);
   if (opts.q) q = q.ilike('name', `%${opts.q}%`);
   if (opts.sort === 'price_asc') q = q.order('price', { ascending: true });
   else if (opts.sort === 'price_desc') q = q.order('price', { ascending: false });
