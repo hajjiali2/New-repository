@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import { Menu, X, Zap, LogOut, CircleUser as UserCircle, LayoutGrid } from 'lucide-react';
+import { Menu, X, Zap, LogOut, CircleUser as UserCircle, LayoutGrid, Building2, Shield } from 'lucide-react';
 
 interface NavbarProps {
   activeSection: string;
   onNavigate: (section: string) => void;
   user: User | null;
+  isAdmin?: boolean;
   onAuthClick: () => void;
   onSignOut: () => void;
   onDashboard: () => void;
+  onAdmin?: () => void;
+  onBusiness?: () => void;
 }
 
 const navLinks = [
@@ -19,7 +22,7 @@ const navLinks = [
   { id: 'contact', label: 'تواصل معنا' },
 ];
 
-export default function Navbar({ activeSection, onNavigate, user, onAuthClick, onSignOut, onDashboard }: NavbarProps) {
+export default function Navbar({ activeSection, onNavigate, user, isAdmin, onAuthClick, onSignOut, onDashboard, onAdmin, onBusiness }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -83,6 +86,24 @@ export default function Navbar({ activeSection, onNavigate, user, onAuthClick, o
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
+                {isAdmin && onAdmin && (
+                  <button
+                    onClick={onAdmin}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-white/10 text-white/70 text-sm font-semibold font-arabic hover:text-white hover:bg-white/10 transition-all duration-200"
+                  >
+                    <Shield className="w-4 h-4" />
+                    الإدارة
+                  </button>
+                )}
+                {onBusiness && (
+                  <button
+                    onClick={onBusiness}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl glass border border-white/10 text-white/70 text-sm font-semibold font-arabic hover:text-white hover:bg-white/10 transition-all duration-200"
+                  >
+                    <Building2 className="w-4 h-4" />
+                    فريقي
+                  </button>
+                )}
                 <button
                   onClick={onDashboard}
                   className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-semibold font-arabic hover:from-orange-600 hover:to-orange-700 transition-all duration-200 glow-orange"
@@ -157,6 +178,24 @@ export default function Navbar({ activeSection, onNavigate, user, onAuthClick, o
                         {user.user_metadata?.full_name || user.email}
                       </span>
                     </div>
+                    {isAdmin && onAdmin && (
+                      <button
+                        onClick={() => { onAdmin(); setIsOpen(false); }}
+                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-white/70 font-arabic text-sm hover:bg-white/5 justify-center"
+                      >
+                        <Shield className="w-4 h-4" />
+                        الإدارة
+                      </button>
+                    )}
+                    {onBusiness && (
+                      <button
+                        onClick={() => { onBusiness(); setIsOpen(false); }}
+                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-white/70 font-arabic text-sm hover:bg-white/5 justify-center"
+                      >
+                        <Building2 className="w-4 h-4" />
+                        فريقي
+                      </button>
+                    )}
                     <button
                       onClick={() => { onDashboard(); setIsOpen(false); }}
                       className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-arabic text-sm font-semibold justify-center"

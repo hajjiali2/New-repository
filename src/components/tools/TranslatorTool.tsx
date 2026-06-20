@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Languages, ArrowRight, Copy, Check, ArrowLeftRight } from 'lucide-react';
 import { chatWithAI } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
+import { getErrorMessage } from '../../lib/errors';
 
 interface TranslatorToolProps {
   onBack: () => void;
@@ -33,13 +35,15 @@ ${text}`;
 
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompt }]);
+      logUsage('translator', text.length, reply.length);
       setResult(reply);
-    } catch (err: any) {
-      const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      const isKeyError = msg === 'MISSING_KEY' || msg === 'INVALID_KEY';
       setResult(
         isKeyError
           ? 'مفتاح OpenRouter API غير مضبوط.\n\nالخطوات:\n1. سجّل في openrouter.ai\n2. انسخ مفتاح API من قسم Keys\n3. ضعه في ملف .env في المتغير VITE_OPENROUTER_API_KEY'
-          : `حدث خطأ: ${err.message}`
+          : `حدث خطأ: ${msg}`
       );
     } finally {
       setLoading(false);

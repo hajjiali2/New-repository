@@ -5,6 +5,8 @@ import {
   Briefcase, FileText, ShoppingBag, Megaphone, Tag,
 } from 'lucide-react';
 import { chatWithAI } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
+import { getErrorMessage } from '../../lib/errors';
 
 interface IdeaGeneratorToolProps {
   onBack: () => void;
@@ -64,7 +66,7 @@ function parseIdeas(raw: string): Idea[] {
   let current: Partial<Idea> | null = null;
 
   for (const line of lines) {
-    const numbered = line.match(/^(\d+)[.\-\)]\s*(.+)/);
+    const numbered = line.match(/^(\d+)[.\-)]\s*(.+)/);
     if (numbered) {
       if (current?.title) ideas.push(current as Idea);
       const parts = numbered[2].split(':');
@@ -91,7 +93,6 @@ export default function IdeaGeneratorTool({ onBack }: IdeaGeneratorToolProps) {
   const [category, setCategory] = useState('business');
   const [count, setCount] = useState('5');
   const [ideas, setIdeas] = useState<Idea[]>([]);
-  const [rawResult, setRawResult] = useState('');
   const [loading, setLoading] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
@@ -103,7 +104,6 @@ export default function IdeaGeneratorTool({ onBack }: IdeaGeneratorToolProps) {
     if (!topic.trim() || loading) return;
     setLoading(true);
     setIdeas([]);
-    setRawResult('');
     setError('');
 
     const prompt = `أنت مستشار أعمال خبير. قدّم ${count} أفكار إبداعية ومبتكرة لـ "${catLabel}" حول الموضوع: "${topic}".
@@ -121,15 +121,16 @@ export default function IdeaGeneratorTool({ onBack }: IdeaGeneratorToolProps) {
 
     try {
       const reply = await chatWithAI([{ role: 'user', content: prompt }]);
-      setRawResult(reply);
+      logUsage('ideagenerator', prompt.length, reply.length);
       const parsed = parseIdeas(reply);
       setIdeas(parsed);
-    } catch (err: any) {
-      const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      const isKeyError = msg === 'MISSING_KEY' || msg === 'INVALID_KEY';
       setError(
         isKeyError
           ? 'مفتاح OpenRouter API غير مضبوط.\n\nالخطوات:\n1. سجّل في openrouter.ai\n2. انسخ مفتاح API\n3. ضعه في .env في المتغير VITE_OPENROUTER_API_KEY'
-          : `حدث خطأ: ${err.message}`
+          : `حدث خطأ: ${msg}`
       );
     } finally {
       setLoading(false);

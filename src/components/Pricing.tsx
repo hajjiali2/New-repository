@@ -2,10 +2,6 @@ import { CheckCircle2, Zap, Building2, Crown } from 'lucide-react';
 
 const openAuth = () => document.dispatchEvent(new CustomEvent('open-auth'));
 
-interface PricingProps {
-  onAuthClick?: () => void;
-}
-
 const plans = [
   {
     name: 'مجاني',
@@ -78,7 +74,7 @@ const plans = [
   },
 ];
 
-export default function Pricing({ onAuthClick }: PricingProps) {
+export default function Pricing() {
   const handleAction = (action: string) => {
     if (action === 'auth') {
       openAuth();

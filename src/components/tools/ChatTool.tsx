@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, ArrowRight, Trash2, MessageSquare } from 'lucide-react';
 import { chatWithAI, ChatMessage } from '../../lib/openrouter';
+import { logUsage } from '../../lib/api/usage';
+import { getErrorMessage } from '../../lib/errors';
 
 interface ChatToolProps {
   onBack: () => void;
@@ -30,16 +32,18 @@ export default function ChatTool({ onBack }: ChatToolProps) {
 
     try {
       const reply = await chatWithAI(newMessages);
+      logUsage('chat', text.length, reply.length);
       setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
-    } catch (err: any) {
-      const isKeyError = err.message === 'MISSING_KEY' || err.message === 'INVALID_KEY';
+    } catch (err) {
+      const msg = getErrorMessage(err);
+      const isKeyError = msg === 'MISSING_KEY' || msg === 'INVALID_KEY';
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
           content: isKeyError
             ? 'لم يتم ضبط مفتاح OpenRouter API بعد.\n\nالخطوات:\n1. سجّل في openrouter.ai\n2. انسخ مفتاح API من قسم Keys\n3. ضعه في ملف .env في المتغير VITE_OPENROUTER_API_KEY'
-            : `حدث خطأ: ${err.message}`,
+            : `حدث خطأ: ${msg}`,
         },
       ]);
     } finally {
