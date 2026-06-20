@@ -1,6 +1,6 @@
 import { ReactNode, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Compass, Moon, Sun, Menu, X, LayoutDashboard, Shield, LogOut, Store } from 'lucide-react';
+import { Moon, Sun, Menu, X, LayoutDashboard, Shield, LogOut, Store } from 'lucide-react';
 import { useTheme, useLocale, useAuth } from '../context';
 import { cn } from '../utils';
 import { CampaignBanner, StickyCTA, ExitIntentPopup } from './Conversion';
@@ -42,9 +42,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 gap-4">
             <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
-                <Compass className="w-5 h-5 text-white" />
-              </div>
+              <img src="/logo.png" alt={t('brand')} className="w-9 h-9 rounded-xl" />
               <span className="font-extrabold font-arabic text-lg hidden sm:block">{t('brand')}</span>
             </Link>
 
@@ -109,9 +107,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
-                <Compass className="w-5 h-5 text-white" />
-              </div>
+              <img src="/logo.png" alt={t('brand')} className="w-9 h-9 rounded-xl" />
               <span className="font-extrabold font-arabic text-lg">{t('brand')}</span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 font-arabic leading-relaxed">{t('footer_about')}</p>
